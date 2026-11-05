@@ -84,7 +84,7 @@ Three sources, shown together in one picker:
 
 - [ ] A fun app name.
 - [x] Check GoldWave's features: see [build-vs-buy.md](build-vs-buy.md) (2026-11-05). Hands-on tests are still open there.
-- [ ] Who manages the web filter; does `github.io` open on a student Chromebook?
+- [ ] Who manages the web filter? (`github.io` does open on a student Chromebook at school under a staff login, 2026-11-05; confirm once with a student login.)
 - [ ] Who manages the shared sound-effects folder?
 - [ ] Rough number of students.
 - [ ] Any district rules for new software (data-privacy agreement, accessibility/WCAG, approval committee)?

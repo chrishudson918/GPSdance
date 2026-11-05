@@ -15,6 +15,12 @@ These were learned on sportio-tv and still apply here.
 
 - **This PC holds logins for two GitHub accounts.** The remote URL carries the username (`https://chrishudson918@github.com/chrishudson918/GPSdance.git`), so Git Credential Manager uses chrishudson918's login for this repo and not Sportio-Live's. Keep it that way on every machine.
 
+## Build and packages
+
+- **npm 10 crashes with "Cannot read properties of null (reading 'edgesOut')" when Vitest's version doesn't match its newest optional add-ons** (e.g. `@vitest/browser-playwright`). Install the Vitest version that matches them, or upgrade npm. `npm ci` from the lockfile works fine. Cost a few retries on 2026-11-05.
+- **`base` in `vite.config.ts` applies to dev and preview too; keep it the same for all.** Setting `/GPSdance/` only for `build` made `vite preview` serve the files at the root, so the page loaded blank (the JS came back as the HTML page). GitHub Pages wasn't affected.
+- **Vitest's `test` settings need `defineConfig` from `vitest/config`,** not `vite`, or the type check fails.
+
 ## Claude Code
 
 - **Skills made during a session aren't slash commands until the next session** (skills load when a session starts). Follow the SKILL.md by hand in the session that created it.

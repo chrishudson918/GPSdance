@@ -16,6 +16,8 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 - Project setup and the GitHub repo (2026-11-05).
 - Build-vs-buy write-up; recommendation approved (2026-11-05).
 - Tech stack chosen (2026-11-05).
+- Starter code + GitHub Pages deploy; device-check page live (2026-11-05).
+- Proof-of-concept test 6 (web filter) passed on the Dell 3120 Chromebook, staff login (2026-11-05).
 
 ## Next
 

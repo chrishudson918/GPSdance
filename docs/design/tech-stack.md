@@ -74,6 +74,21 @@ A bare-bones page, not the real app, tested on a **student Chromebook** and a di
 
 The user (and later the pilot group) judges anything heard by ear. Claude measures the times and memory.
 
+**Test device:** a Dell Chromebook 3120, about 4 GB memory, ChromeOS with Chrome 148. A budget education model, so tests 2 and 4 (processor-heavy) are the ones most at risk.
+
+**Results so far**
+
+| # | Result |
+|---|---|
+| 6 | **Passed** 2026-11-05: the live site opened on the Dell 3120 at school (school network, staff login). Still to do: confirm once with a student login, since filters can differ by account. |
+
+## What's built now
+
+- **Starter page** ([src/App.tsx](../../src/App.tsx), checks in [src/deviceCheck.ts](../../src/deviceCheck.ts)): "Will it work on this computer?" Shows browser, memory (Chrome rounds it and caps it at 8 GB), Web Audio, WASM, and the address reached, with a **Copy these results** button. Replaced by the real app later.
+- **Checks:** `npm run check` = TypeScript type check + Vitest. GitHub Actions runs them on every push and pull request; pushes to `main` that pass are published to GitHub Pages ([.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)).
+- **Paths:** the site lives at `/GPSdance/` (`base` in `vite.config.ts`), in dev and preview too.
+- **Versions:** pinned exactly in `package.json` (Vite 8.3.5, React 19.3.1, TypeScript 7.0.2, Vitest 5.1.0), Node 22 (`.nvmrc`).
+
 ## Setup the user does (click-by-click steps when we get there)
 
 1. A **personal Google Cloud project** (Gmail), in testing mode, with two test Gmail accounts. That gives an OAuth client ID and a Picker API key, both fine in public code.
