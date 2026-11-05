@@ -48,7 +48,9 @@ Assumptions are the enemy: if the answer isn't in these files or the code, ask.
 - **Plain words on screen** for "somewhat comfortable" users: "Speed", not "Time-stretch ratio"; "Make all songs the same loudness", not "LUFS normalization".
 - **Stack:** TypeScript + React + Vite, Web Audio, Google Drive (`drive.file`). Libraries and why: [docs/design/tech-stack.md](docs/design/tech-stack.md). Only MIT/Apache/BSD libraries (LGPL only as a separate file; no GPL/AGPL).
 - **One project = one `.gpsmix` file** (zip: `project.json` + source audio). Edits are non-destructive.
-- Build and run steps go here once the code exists.
+- **Run:** `npm install`, then `npm run dev` (http://localhost:5173/GPSdance/). **Before any commit:** `npm run check` (type check + Vitest). All commands: [README.md](README.md).
+- **Deploy:** every push to `main` → GitHub Actions checks, builds and publishes to https://chrishudson918.github.io/GPSdance/. `base: '/GPSdance/'` in `vite.config.ts` must match the hosting folder.
+- **New packages:** pin exact versions (`--save-exact`), released at least two weeks ago; check the license first.
 
 ## Docs layout
 
