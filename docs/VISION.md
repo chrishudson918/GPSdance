@@ -15,9 +15,13 @@ Every feature idea is checked against this line. If it makes the app feel like a
 Today the instructors use a patchwork: GoldWave, Audacity, GarageBand on personal devices. All of them:
 
 - do far more than a dance mix needs, which makes the few tools they use harder to find and learn;
-- install on one kind of computer only. **None of them run on a Chromebook**, which students and staff use;
+- don't work with Google Drive, where the department's music already lives;
 - treat sharing as "email the file", with no way to hand another instructor an editable project or a play-only version;
-- (to be checked) leave bad-word cleanup to a person listening through and fixing each word by hand.
+- have no practice player (named sections, loops, count-in, set lists);
+- leave bad-word cleanup to a person listening through and selecting each word by hand. GoldWave has a Censor tool and transcription, but they aren't connected;
+- mostly don't run on Chromebooks. GoldWave's browser version, Infinity, is the exception (still to be tested on a district Chromebook).
+
+Details: [build-vs-buy.md](build-vs-buy.md).
 
 ## Who it's for
 

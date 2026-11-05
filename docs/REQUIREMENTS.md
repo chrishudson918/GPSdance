@@ -83,7 +83,7 @@ Three sources, shown together in one picker:
 ## 9. Open questions
 
 - [ ] A fun app name.
-- [ ] Check GoldWave's features (especially any bad-word or speech tools) for the write-up.
+- [x] Check GoldWave's features: see [build-vs-buy.md](build-vs-buy.md) (2026-11-05). Hands-on tests are still open there.
 - [ ] Who manages the web filter; does `github.io` open on a student Chromebook?
 - [ ] Who manages the shared sound-effects folder?
 - [ ] Rough number of students.

@@ -9,9 +9,13 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 
 ## Now
 
-- Project setup and the GitHub repo.
-- Build-vs-buy write-up (needs the GoldWave feature check).
-- Tech stack choice + Chromebook proof of concept.
+- Chromebook proof of concept (6 tests; [design/tech-stack.md](design/tech-stack.md)). It's the build-vs-buy decision point.
+
+## Done
+
+- Project setup and the GitHub repo (2026-11-05).
+- Build-vs-buy write-up; recommendation approved (2026-11-05).
+- Tech stack chosen (2026-11-05).
 
 ## Next
 

@@ -11,6 +11,10 @@ These were learned on sportio-tv and still apply here.
 - **Keep names, numbers and controls in fixed columns** row to row; the user notices when they don't line up.
 - **Claude can't hear audio.** For anything judged by ear (fade shapes, transition smoothness, sound effects, censor results), the user or the pilot group listens and decides. Claude can still measure (levels, BPM, timing).
 
+## Git and GitHub
+
+- **This PC holds logins for two GitHub accounts.** The remote URL carries the username (`https://chrishudson918@github.com/chrishudson918/GPSdance.git`), so Git Credential Manager uses chrishudson918's login for this repo and not Sportio-Live's. Keep it that way on every machine.
+
 ## Claude Code
 
 - **Skills made during a session aren't slash commands until the next session** (skills load when a session starts). Follow the SKILL.md by hand in the session that created it.

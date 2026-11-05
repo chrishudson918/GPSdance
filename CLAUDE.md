@@ -10,6 +10,8 @@ This is a **work project** for the user's job in district IT, not a personal one
 |---|---|
 | Every session | [docs/STATUS.md](docs/STATUS.md): where things stand, what's next |
 | Feature or design work | [docs/VISION.md](docs/VISION.md), [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md), [docs/ROADMAP.md](docs/ROADMAP.md), the area's file in `docs/design/` |
+| Tech choices, libraries | [docs/design/tech-stack.md](docs/design/tech-stack.md) |
+| Build vs. buy (GoldWave etc.) | [docs/build-vs-buy.md](docs/build-vs-buy.md); the shared copy is a Claude doc, linked at its top |
 | Any code change | [docs/LESSONS.md](docs/LESSONS.md): gotchas already paid for |
 | "Why is it like this?" | [docs/history/](docs/history/): the session logs, as written at the time |
 
@@ -44,7 +46,9 @@ Assumptions are the enemy: if the answer isn't in these files or the code, ask.
 
 - **American English everywhere** (screen text, docs, comments, replies): color, favorite, center.
 - **Plain words on screen** for "somewhat comfortable" users: "Speed", not "Time-stretch ratio"; "Make all songs the same loudness", not "LUFS normalization".
-- Stack, build and run steps go here once chosen.
+- **Stack:** TypeScript + React + Vite, Web Audio, Google Drive (`drive.file`). Libraries and why: [docs/design/tech-stack.md](docs/design/tech-stack.md). Only MIT/Apache/BSD libraries (LGPL only as a separate file; no GPL/AGPL).
+- **One project = one `.gpsmix` file** (zip: `project.json` + source audio). Edits are non-destructive.
+- Build and run steps go here once the code exists.
 
 ## Docs layout
 
