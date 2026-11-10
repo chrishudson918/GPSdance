@@ -29,7 +29,9 @@ import {
 } from './results';
 
 const build = __BUILD_INFO__;
-const SPEEDS = [0.9, 1.1];
+// 90% and 110% are editing tempo changes; 75%, 60% and 50% are practice speeds (teachers slow a song
+// down so students can learn the moves, and how slow depends on the song and the class).
+const SPEEDS = [0.5, 0.6, 0.75, 0.9, 1.1];
 
 /**
  * Whole songs (default) or only the parts the mix uses (address ends in ?keep=parts).
