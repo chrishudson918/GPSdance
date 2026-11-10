@@ -2,7 +2,7 @@
 
 A web app for Gilbert Public Schools high school dance instructors and students: build routine music (cut, fade, tempo, transitions) and play it at practice. Everything runs in the browser; projects are files in the user's own Google Drive.
 
-**Live:** https://chrishudson918.github.io/GPSdance/ (right now a starter page that checks whether a computer can run the app).
+**Live:** https://chrishudson918.github.io/GPSdance/ (right now a starter page that checks whether a computer can run the app) and https://chrishudson918.github.io/GPSdance/poc/ (proof-of-concept tests 1–4).
 
 Start with [docs/VISION.md](docs/VISION.md) and [docs/STATUS.md](docs/STATUS.md). [CLAUDE.md](CLAUDE.md) has the project rules.
 
@@ -35,7 +35,8 @@ The site lives in the `/GPSdance/` folder of the Pages address, set by `base` in
 ## Layout
 
 ```
-src/            the app (React + TypeScript)
+src/            the app (React + TypeScript); src/poc/ is the proof-of-concept test page
+poc/            entry page for the proof-of-concept tests
 public/         files copied as-is (favicon)
 docs/           vision, requirements, design, status, history
 .github/        the deploy workflow

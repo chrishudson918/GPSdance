@@ -29,7 +29,7 @@ Browser (Chrome on Chromebook / Windows)
 | Tempo change, same pitch | **Signalsmith Stretch** | MIT | Good quality, runs in the browser (WASM); best for 0.75×–1.5×, which covers dance tempo changes |
 | BPM and beats | **web-audio-beat-detector** (BPM + first beat) + our own beat grid, adjustable by hand | MIT | Small and simple; accuracy to be checked on the department's real songs |
 | Volume leveling | **Our own loudness meter** (the broadcast LUFS standard) | — | About 100 lines; no dependency needed |
-| Export | **WAV:** our own writer · **MP3:** lamejs, kept as its own file | — / LGPL | WAV is trivial; lamejs is the standard browser MP3 encoder |
+| Export | **WAV:** our own writer · **MP3:** lamejs (the `@breezystack/lamejs` fork), kept as its own file | — / LGPL | WAV is trivial; lamejs is the standard browser MP3 encoder. The fork is the same encoder repackaged; the original (last updated 2017) is known to break in modern build tools like Vite (user's OK, 2026-11-10) |
 | Waveforms | **Our own canvas drawing** from small precomputed summaries | — | Fast even for long mixes |
 | Project bundle | **fflate** (zip) | MIT | One project = one file (see below) |
 | Google | **Google Identity Services** + **Google Picker** + **Drive API v3**, scope **`drive.file`** | — | The app sees only files the user picks or the app made; the scope that needs no Google security review |
@@ -57,7 +57,7 @@ Cost: song copies take Drive space (about 4 MB per song as MP3). A 10-song mix i
 
 ## Long mixes on Chromebooks
 
-A decoded song takes about 10 MB per stereo minute in memory, so a 10-minute show is about 200 MB, and the mix render needs about the same again. The proof of concept measures this on a student Chromebook. If it's too much, the fallback is to keep only the parts of each song the mix uses, or to decode on demand (Chrome's WebCodecs).
+Chrome keeps decoded audio as 32-bit numbers at the device's sample rate (usually 48 kHz), so a decoded song takes about **23 MB per stereo minute** in memory (the first estimate, 10 MB, was too low). Ten whole 3.5-minute songs are about 800 MB; a 10-minute mix render needs about 220 MB more. The fallback is to keep only the parts of each song the mix uses (a 10-minute show is then about 230 MB), or to decode on demand (Chrome's WebCodecs). The proof-of-concept page measures both ways on the Chromebook.
 
 ## Proof of concept (about 2 weeks; the build-vs-buy decision point)
 
@@ -80,6 +80,7 @@ The user (and later the pilot group) judges anything heard by ear. Claude measur
 
 | # | Result |
 |---|---|
+| 1–4 | Test page built and live (2026-11-10). On the user's Windows PC with 9 synthetic 2:50 beat tracks: load 3.8 s; audio in memory 560 MB whole songs vs. 247 MB parts only; speed change 2–4 s per song, beats exactly on the new tempo; BPM 1.8 s for all, but right on only 5 of 9 synthetic tracks (real songs decide); MP3 of the 9:39 mix in 17.5 s (13.3 MB). Not yet run on the Chromebook. |
 | 6 | **Passed** 2026-11-05: the live site opened on the Dell 3120 at school (school network, staff login). Still to do: confirm once with a student login, since filters can differ by account. |
 
 ## What's built now
@@ -87,7 +88,18 @@ The user (and later the pilot group) judges anything heard by ear. Claude measur
 - **Starter page** ([src/App.tsx](../../src/App.tsx), checks in [src/deviceCheck.ts](../../src/deviceCheck.ts)): "Will it work on this computer?" Shows browser, memory (Chrome rounds it and caps it at 8 GB), Web Audio, WASM, and the address reached, with a **Copy these results** button. Replaced by the real app later.
 - **Checks:** `npm run check` = TypeScript type check + Vitest. GitHub Actions runs them on every push and pull request; pushes to `main` that pass are published to GitHub Pages ([.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)).
 - **Paths:** the site lives at `/GPSdance/` (`base` in `vite.config.ts`), in dev and preview too.
-- **Versions:** pinned exactly in `package.json` (Vite 8.3.5, React 19.3.1, TypeScript 7.0.2, Vitest 5.1.0), Node 22 (`.nvmrc`).
+- **Versions:** pinned exactly in `package.json` (Vite 8.3.5, React 19.3.1, TypeScript 7.0.2, Vitest 5.1.0; audio: signalsmith-stretch 1.3.2, web-audio-beat-detector 8.2.39, @breezystack/lamejs 1.2.7), Node 22 (`.nvmrc`).
+- **Two pages:** `index.html` (device check) and `poc/index.html` (tests 1–4), both listed in `build.rollupOptions.input` in `vite.config.ts`.
+
+## Proof-of-concept page (tests 1–4)
+
+At `/GPSdance/poc/` (code in [src/poc/](../../src/poc/), its own entry `poc/index.html`), linked from the device check. A test bench, not the real app; it goes away once the proof of concept is done.
+
+- **Songs** are picked with the browser's file chooser (on a Chromebook that includes Google Drive). Nothing is uploaded.
+- **Keep in memory:** whole songs, or only the parts the mix uses (`?keep=parts` in the address; switching reloads the page so memory starts fresh).
+- **Test mix:** the first 8 songs, 75 s each from 30 s in, 3-second crossfades, about 10 minutes ([mixPlan.ts](../../src/poc/mixPlan.ts)). The same plan drives live playback and the offline render, so they match.
+- **Speed:** Signalsmith Stretch rendered offline (`OfflineAudioContext` + its audio worklet). **BPM:** web-audio-beat-detector `guess()`; version 8.2.39 returns only the rounded BPM and first beat (no exact tempo), so the click-along can drift slightly late in long songs. **MP3:** 192 kbps in a Web Worker ([mp3.worker.ts](../../src/poc/mp3.worker.ts)), so lamejs is bundled as its own file.
+- **Copy all results** puts a text summary with PASS/FAIL marks (limits from the table above) on the clipboard. Tab memory can't be read by the page on GitHub Pages, so the tester types it in from Chrome's Task Manager (Search + Esc).
 
 ## Setup the user does (click-by-click steps when we get there)
 

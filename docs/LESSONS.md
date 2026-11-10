@@ -13,7 +13,7 @@ These were learned on sportio-tv and still apply here.
 
 ## Git and GitHub
 
-- **This PC holds logins for two GitHub accounts.** The remote URL carries the username (`https://chrishudson918@github.com/chrishudson918/GPSdance.git`), so Git Credential Manager uses chrishudson918's login for this repo and not Sportio-Live's. Keep it that way on every machine.
+- **This PC holds logins for two GitHub accounts.** The remote URL carries the username (`https://chrishudson918@github.com/chrishudson918/GPSdance.git`), and the repo's own config pins it too, so Git Credential Manager always uses chrishudson918's login here and never asks or picks Sportio-Live's. On each new machine, run once in the repo: `git config --local credential.https://github.com.username chrishudson918`.
 
 ## Build and packages
 
@@ -21,9 +21,16 @@ These were learned on sportio-tv and still apply here.
 - **`base` in `vite.config.ts` applies to dev and preview too; keep it the same for all.** Setting `/GPSdance/` only for `build` made `vite preview` serve the files at the root, so the page loaded blank (the JS came back as the HTML page). GitHub Pages wasn't affected.
 - **Vitest's `test` settings need `defineConfig` from `vitest/config`,** not `vite`, or the type check fails.
 
+## Audio
+
+- **Decoded audio is about 23 MB per stereo minute in Chrome** (32-bit floats at 48 kHz), not 10 MB. Holding whole songs fills memory fast; plan on keeping only the parts in use. Measured 2026-11-10.
+- **web-audio-beat-detector 8.2.39's `guess()` returns `{ bpm, offset }` only.** Its README also mentions `tempo`, but the code doesn't return it. Use `analyze()` for the unrounded tempo.
+- **Signalsmith Stretch works offline:** create it on an `OfflineAudioContext`, `addBuffers()` the song, then `start(0, 0, undefined, rate)`. The output is time-aligned (no latency shift); checked with a click track.
+
 ## Claude Code
 
 - **Skills made during a session aren't slash commands until the next session** (skills load when a session starts). Follow the SKILL.md by hand in the session that created it.
 - **Cloud sessions (claude.ai/code) clone shallowly and may set a different git identity.** Check `git config user.email` before committing there.
+- **Testing audio pages without real songs:** build test tracks in the page with `OfflineAudioContext`, wrap them as `File`s, put them on the file input with `DataTransfer`, and dispatch `change`. Keep each `javascript_tool` call under about 40 s (it times out at 45 s).
 - **Testing a page in the built-in browser:** it isn't signed in to anything. Files outside the project folder render as static snapshots. Add `<meta name="viewport" content="width=device-width,initial-scale=1">` for phone-width tests. Screenshots can lag a step behind; check state with `javascript_tool` before deciding a click failed.
 - **Python on this PC:** `python -I` can't import user-site packages (e.g. Pillow); use `python -P`. Write long scripts to a file instead of a quote-heavy Bash heredoc.
