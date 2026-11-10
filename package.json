@@ -16,8 +16,11 @@
     "check": "npm run typecheck && npm run test"
   },
   "dependencies": {
+    "@breezystack/lamejs": "1.2.7",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "signalsmith-stretch": "1.3.2",
+    "web-audio-beat-detector": "8.2.39"
   },
   "devDependencies": {
     "@types/node": "22.20.5",

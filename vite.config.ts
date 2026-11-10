@@ -18,6 +18,19 @@ export default defineConfig({
   // addresses match the live one (http://localhost:5173/GPSdance/).
   // Change this when hosting moves (e.g. to Firebase Hosting at the root: '/').
   base: '/GPSdance/',
+  build: {
+    rollupOptions: {
+      // Two pages: the device check (main address) and the proof-of-concept tests (/poc/).
+      input: {
+        main: 'index.html',
+        poc: 'poc/index.html',
+      },
+    },
+  },
+  worker: {
+    // The MP3 worker uses imports, so it's built as a module.
+    format: 'es',
+  },
   define: {
     __BUILD_INFO__: JSON.stringify(buildInfo),
   },

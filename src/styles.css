@@ -129,3 +129,170 @@ button:focus-visible {
 footer {
   margin-top: 8px;
 }
+
+/* ---- Proof-of-concept test page (src/poc/) ---- */
+
+.card.wide {
+  max-width: 44rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+.test {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0;
+  font-size: 0.9rem;
+}
+
+button:disabled {
+  background: var(--line);
+  color: var(--muted);
+  cursor: default;
+}
+
+.small-button {
+  padding: 5px 10px;
+  font-size: 0.85rem;
+  background: var(--card);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.small-button.picked {
+  background: var(--accent);
+  color: #fff;
+}
+
+.small-button:disabled {
+  border-color: var(--line);
+  background: var(--card);
+}
+
+/* The file chooser, styled as a button (the real input is hidden inside the label). */
+.file-button {
+  display: inline-block;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+
+.file-button.disabled {
+  background: var(--line);
+  color: var(--muted);
+}
+
+.file-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.file-button:focus-within {
+  outline: 3px solid #8fb3e8;
+  outline-offset: 2px;
+}
+
+.small-text {
+  font-size: 0.85rem;
+  margin-top: 6px;
+}
+
+.status {
+  min-height: 1.4em;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+
+.error {
+  color: var(--fail);
+  font-size: 0.9rem;
+}
+
+select,
+input,
+textarea {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  max-width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0;
+  font-size: 0.9rem;
+}
+
+.field input {
+  width: 8rem;
+}
+
+/* Fixed columns so names, numbers and buttons line up row to row (docs/LESSONS.md). */
+.bpm-table {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 3.5rem 5rem auto;
+  gap: 6px 10px;
+  align-items: center;
+  margin-top: 10px;
+  font-size: 0.85rem;
+}
+
+.bpm-row {
+  display: contents;
+}
+
+.bpm-row input {
+  width: 100%;
+  padding: 4px 6px;
+}
+
+.bpm-row .choice {
+  margin: 0;
+}
+
+.song-name {
+  overflow-wrap: anywhere;
+}
+
+/* Phones and narrow windows: let the song name take its own line. */
+@media (max-width: 560px) {
+  .bpm-table {
+    grid-template-columns: 3.5rem 5rem minmax(0, 1fr);
+  }
+  .bpm-table > .muted:first-child {
+    display: none;
+  }
+  .song-name {
+    grid-column: 1 / -1;
+  }
+}
+
+button.primary {
+  margin-top: 4px;
+}
