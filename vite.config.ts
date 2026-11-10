@@ -20,10 +20,12 @@ export default defineConfig({
   base: '/GPSdance/',
   build: {
     rollupOptions: {
-      // Two pages: the device check (main address) and the proof-of-concept tests (/poc/).
+      // Three pages: the device check (main address), the proof-of-concept tests 1-4 (/poc/)
+      // and test 5, Drive sharing (/drive-test/).
       input: {
         main: 'index.html',
         poc: 'poc/index.html',
+        driveTest: 'drive-test/index.html',
       },
     },
   },

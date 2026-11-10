@@ -296,3 +296,24 @@ textarea {
 button.primary {
   margin-top: 4px;
 }
+
+/* Test 5: the opened project and the "What happened" list. */
+.opened {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.opened p {
+  margin: 4px 0;
+}
+
+.opened audio {
+  width: 100%;
+  margin-top: 6px;
+}
+
+.log {
+  padding-left: 20px;
+}

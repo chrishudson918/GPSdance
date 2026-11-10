@@ -27,6 +27,12 @@ These were learned on sportio-tv and still apply here.
 - **web-audio-beat-detector 8.2.39's `guess()` returns `{ bpm, offset }` only.** Its README also mentions `tempo`, but the code doesn't return it. Use `analyze()` for the unrounded tempo.
 - **Signalsmith Stretch works offline:** create it on an `OfflineAudioContext`, `addBuffers()` the song, then `start(0, 0, undefined, rate)`. The output is time-aligned (no latency shift); checked with a click track.
 
+## Google (sign-in, Picker, Drive)
+
+- **A website restriction on the Picker API key makes the Picker say "The API developer key is invalid".** It failed with our two addresses, and still failed with `https://docs.google.com/*` added; it worked with Application restrictions = None (the key still limited to the Google Picker API only). Sign-in and Drive calls weren't affected (they use the OAuth token, not the key). Found 2026-11-10 in test 5. The cause isn't known yet: work it out before the district's real key is made.
+- **Google key changes take a few minutes to apply.** Wait about 5 minutes after saving before deciding a change didn't work.
+- **Load Google's scripts once and share the wait** ([google.ts](../src/google/google.ts) `loadScript`). React's StrictMode runs page setup twice in development; the second run saw the script tag already there, went on early, and hit "gapi is not defined".
+
 ## Claude Code
 
 - **Skills made during a session aren't slash commands until the next session** (skills load when a session starts). Follow the SKILL.md by hand in the session that created it.
