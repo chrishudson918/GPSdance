@@ -21,7 +21,7 @@ describe('gpsmix', () => {
   });
 
   it('makes zip-safe song paths', () => {
-    expect(songPath(0, 'Song: one?.mp3')).toBe('songs/1-Song_ one_.mp3');
+    expect(songPath(0, 'Song: one?.mp3')).toBe('audio/1-Song_ one_.mp3');
   });
 
   it('says plainly when a file is not a project', () => {

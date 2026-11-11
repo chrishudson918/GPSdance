@@ -5,24 +5,23 @@
 ## Where things stand
 
 - Discovery, [VISION.md](VISION.md), [REQUIREMENTS.md](REQUIREMENTS.md), the [tech stack](design/tech-stack.md) and the build-vs-buy recommendation are approved (build; GoldWave Infinity trial as the fallback). Shared doc: https://claude.ai/artifact/2XYgz1csbokRFJyseGsAtk.
-- **Live:** https://chrishudson918.github.io/GPSdance/ (device check) and **https://chrishudson918.github.io/GPSdance/poc/** (proof-of-concept tests 1–4, commit 8cdede3). How the test page works: [design/tech-stack.md](design/tech-stack.md), "Proof-of-concept page".
-- **Test Chromebook:** Dell Chromebook 3120, about 4 GB memory, Chrome 148. Test 6 (web filter) passed there with a staff login.
-- **Measured on this PC only** (synthetic beat tracks): loading, speed change and MP3 export are well inside the limits. Two warnings for the Chromebook run:
-  - **Memory:** decoded audio is about 23 MB per minute, not the 10 MB first estimated. Whole songs will likely break test 1's 500 MB limit; the page's "only the parts the mix uses" switch cuts it to about a third.
-  - **BPM:** right on only 5 of 9 synthetic tracks. Real songs decide test 3.
-- Git on this PC always uses the chrishudson918 GitHub login for this repo (other PCs: one command in [LESSONS.md](LESSONS.md)).
+- **The proof of concept supports building it ourselves: all six tests have passed.** Numbers are in [design/tech-stack.md](design/tech-stack.md), "Results so far".
+  - Tests 1–4 on the Dell 3120 with 8 real songs: they pass **only when the app keeps just the parts of each song the mix uses** (tab 279 MB). Whole songs fail (831 MB, and a crash). That's now a design rule.
+  - Practice speeds: 75% sounds clean; 60% and 50% have some warble but are usable for practice.
+  - Test 5 (Drive sharing) passed on this PC: a `.gpsmix` shared as Viewer opens play-only, and shared as Editor it opens editable, using only `drive.file`.
+- **Live pages:** https://chrishudson918.github.io/GPSdance/ (device check), `/poc/` (tests 1–4), `/drive-test/` (test 5).
+- **Google Cloud test project** "GPSdance test" is set up (details in tech-stack.md, "Setup"). Its Picker key has **no website restriction**, because the Picker rejected the key with one. The key is still limited to the Picker API. See [LESSONS.md](LESSONS.md), "Google".
 
 ## Next
 
-1. **The user runs tests 1–4 at work on the Dell 3120**, with the songs in a Drive folder: first with "Whole songs", then with "Only the parts the mix uses". Copy the results each time and paste both into the next session (start it with `/start-session`). Steps: pick songs → Play mix (Task Manager: Search + Esc, type in the tab's memory) → Make 90% / 110% and rate them → Find BPM, click-along, mark each song → Make MP3 → Copy all results.
-2. Read the results together: pass/fail per test, and whether whole songs or parts-only is the way forward. This is the build-vs-buy decision point.
-3. **Test 5 (Drive sharing):** the user sets up a personal Google Cloud project (testing mode, two Gmail test accounts). Claude gives click-by-click steps.
-4. Editor and Player mockups (the user picks before anything is built).
+1. **Editor and Player mockups** (options first; the user picks before anything is built). Things to bring in: keeping only the parts in memory, a "Getting it ready…" message for practice speed, a progress bar for MP3 export, fixing a wrong BPM by hand, and maybe a hint that very slow speeds sound rougher (just an idea, not agreed).
+2. Run test 5 on the Dell 3120 from the live address (`/drive-test/`), to check that the Picker gets through the web filter.
+3. Work out the Picker key's website restriction before the district's real key is made.
 
 ## Waiting on the user (no rush)
 
-- Pick **8–10 of the department's real songs** and put them in a Google Drive folder (needed for step 1).
 - Open the live page once with a **student login** to confirm test 6.
+- Listen to "BbY WOW" with the click-along: is it 160 or 120 BPM?
 - GoldWave Infinity trial on the Dell 3120 (free evaluation mode), plus asking GoldWave about education pricing.
 - Who manages the web filter.
 - Heads-up to the Workspace admin coworker.
@@ -30,5 +29,6 @@
 
 ## Not checked yet
 
-- Tests 1–4 on the Chromebook, with real songs; anything judged by ear (crossfades, speed-change quality, click-along).
-- Test 5; anything on a district Windows PC.
+- Test 5 on the Chromebook and from the live address.
+- Anything on a district Windows PC.
+- Crossfades judged by ear (the mix played with no stutter, but transition quality wasn't rated).

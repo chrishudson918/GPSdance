@@ -9,7 +9,7 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 
 ## Now
 
-- Chromebook proof of concept (6 tests; [design/tech-stack.md](design/tech-stack.md)). It's the build-vs-buy decision point. Tests 1–4 page live at /GPSdance/poc/; waiting on the Chromebook run.
+- Chromebook proof of concept (6 tests; [design/tech-stack.md](design/tech-stack.md)), the build-vs-buy decision point. All six have passed; left: test 5 on the Chromebook from the live address, test 6 with a student login, and fixing the Picker key's website restriction.
 
 ## Done
 
@@ -19,11 +19,12 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 - Starter code + GitHub Pages deploy; device-check page live (2026-11-05).
 - Proof-of-concept test 6 (web filter) passed on the Dell 3120 Chromebook, staff login (2026-11-05).
 - Proof-of-concept page for tests 1–4 built and live (2026-11-10).
+- Tests 1–4 passed on the Dell 3120 with real songs, keeping only the parts the mix uses (2026-11-10).
+- Google Cloud test project set up; test 5 (Drive sharing) page built and passed on the user's PC (2026-11-10).
 
 ## Next
 
 - Editor and Player mockups.
-- Google Cloud project (testing mode) for Drive sign-in during development.
 - Pilot group set up.
 
 ## Later

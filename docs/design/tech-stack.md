@@ -26,13 +26,13 @@ Browser (Chrome on Chromebook / Windows)
 | UI | **React** | MIT | The most widely known UI library; any future maintainer (or Claude) knows it |
 | Build | **Vite** | MIT | Fast, simple; produces plain static files |
 | Playback and mixing | **Web Audio API** (built into Chrome) | — | Plays clips, fades and crossfades in sync; `OfflineAudioContext` renders the final mix |
-| Tempo change, same pitch | **Signalsmith Stretch** | MIT | Good quality, runs in the browser (WASM); best for 0.75×–1.5×, which covers dance tempo changes |
+| Tempo change, same pitch | **Signalsmith Stretch** | MIT | Good quality, runs in the browser (WASM). On the Chromebook: clean at 75%–110%; some warble at 60% and 50%, still usable for practice (test 2) |
 | BPM and beats | **web-audio-beat-detector** (BPM + first beat) + our own beat grid, adjustable by hand | MIT | Small and simple; accuracy to be checked on the department's real songs |
 | Volume leveling | **Our own loudness meter** (the broadcast LUFS standard) | — | About 100 lines; no dependency needed |
 | Export | **WAV:** our own writer · **MP3:** lamejs (the `@breezystack/lamejs` fork), kept as its own file | — / LGPL | WAV is trivial; lamejs is the standard browser MP3 encoder. The fork is the same encoder repackaged; the original (last updated 2017) is known to break in modern build tools like Vite (user's OK, 2026-11-10) |
 | Waveforms | **Our own canvas drawing** from small precomputed summaries | — | Fast even for long mixes |
-| Project bundle | **fflate** (zip) | MIT | One project = one file (see below) |
-| Google | **Google Identity Services** + **Google Picker** + **Drive API v3**, scope **`drive.file`** | — | The app sees only files the user picks or the app made; the scope that needs no Google security review |
+| Project bundle | **fflate** 0.8.3 (zip) | MIT | One project = one file (see below) |
+| Google | **Google Identity Services** + **Google Picker** + **Drive API v3**, scope **`drive.file`** | — | The app sees only files the user picks or the app made; the scope that needs no Google security review. Test 5 showed it's enough for Editor/Viewer sharing |
 | Tests | **Vitest** (logic) + **Playwright** (in a real browser) | MIT / Apache | Standard pair for React + Vite |
 | Hosting | **GitHub Pages** (built by GitHub Actions) → later **Firebase Hosting** in the district's Google Cloud | — | Free; static files only |
 | R2 word-finding | **Transformers.js** + a **Whisper** model, served from our own address | Apache / MIT | Runs on the device; nothing leaves the computer |
@@ -57,7 +57,11 @@ Cost: song copies take Drive space (about 4 MB per song as MP3). A 10-song mix i
 
 ## Long mixes on Chromebooks
 
-Chrome keeps decoded audio as 32-bit numbers at the device's sample rate (usually 48 kHz), so a decoded song takes about **23 MB per stereo minute** in memory (the first estimate, 10 MB, was too low). Ten whole 3.5-minute songs are about 800 MB; a 10-minute mix render needs about 220 MB more. The fallback is to keep only the parts of each song the mix uses (a 10-minute show is then about 230 MB), or to decode on demand (Chrome's WebCodecs). The proof-of-concept page measures both ways on the Chromebook.
+Chrome keeps decoded audio as 32-bit numbers at the device's sample rate (usually 48 kHz), so a decoded song takes about **23 MB per stereo minute** in memory.
+
+**Rule (decided 2026-11-10 from test 1 on the Dell 3120): keep only the parts of each song the mix uses in memory, never whole songs.** With 8 real songs: whole songs took 708 MB of audio and 831 MB for the tab (fails the 500 MB limit), and the tab crashed at about 1,095 MB while making speed copies of a third song. Parts only: 220 MB of audio, 279 MB for the tab, no stutter.
+
+The same goes for speed changes: make the slowed or sped-up copy only of the part in use, and free the old copy before making a new one (each copy is the part's length ÷ the speed, so 50% doubles it).
 
 ## Proof of concept (about 2 weeks; the build-vs-buy decision point)
 
@@ -66,7 +70,7 @@ A bare-bones page, not the real app, tested on a **student Chromebook** and a di
 | # | Test | Pass if |
 |---|---|---|
 | 1 | Load a 10-minute, 8-song mix; play it with crossfades | No stutter; tab stays under ~500 MB; loads in < 30 s |
-| 2 | Tempo change on a song (90%, 110%) | **The user listens:** no obvious warble; processing < 10 s per song |
+| 2 | Tempo change on a song (90%, 110%; practice speeds 75%, 60%, 50% added 2026-11-10) | **The user listens:** no obvious warble; processing < 10 s per song |
 | 3 | BPM detection on 10 of the department's songs | Right on at least 8 (half/double counts as fixable by hand) |
 | 4 | Export the 10-minute mix to MP3 | Finishes in < 2 minutes on the Chromebook |
 | 5 | Drive: sign in with Gmail, pick a song, save a `.gpsmix`, share it with a second Gmail as Viewer and as Editor | It opens for the second account, play-only vs. editable |
@@ -80,7 +84,11 @@ The user (and later the pilot group) judges anything heard by ear. Claude measur
 
 | # | Result |
 |---|---|
-| 1–4 | Test page built and live (2026-11-10). On the user's Windows PC with 9 synthetic 2:50 beat tracks: load 3.8 s; audio in memory 560 MB whole songs vs. 247 MB parts only; speed change 2–4 s per song, beats exactly on the new tempo; BPM 1.8 s for all, but right on only 5 of 9 synthetic tracks (real songs decide); MP3 of the 9:39 mix in 17.5 s (13.3 MB). Not yet run on the Chromebook. |
+| 1 | **Passed with parts only** (Dell 3120, 8 real songs, 2026-11-10): loaded in 9.8 s, 220 MB of audio, tab 279 MB, no stutter. **Failed with whole songs:** 708 MB of audio, tab 831 MB. |
+| 2 | **Passed:** 90% and 110% clean, 2.4–7.4 s (whole songs slower). Practice speeds (parts only): 75% clean; 60% and 50% some warble but usable; all under 10 s. |
+| 3 | **Passed:** 8 of 8 right by ear, 0.1–0.5 s each. One song ("BbY WOW") came out 160 BPM from the whole song and 120 from the part; the user isn't sure which is right, so detection can depend on what it hears. Fixing BPM by hand stays a requirement. |
+| 4 | **Passed:** MP3 of the 9.7-minute mix in 40.7 s (parts only; 13.3 MB). Long enough that the real app should show progress. |
+| 5 | **Passed** on the user's Windows PC (localhost, Chrome, two Gmail accounts, 2026-11-10): Gmail A picked a song and saved a `.gpsmix`; shared as Viewer, Gmail B opened it play-only (Drive's `canEdit` false) and a save was refused (403); shared as Editor, Gmail B opened it editable and a save went through; the song inside played. Not yet run on the Chromebook or from the live address. **Open:** the Picker API key only works with no website restriction (see [LESSONS.md](../LESSONS.md), "Google"). |
 | 6 | **Passed** 2026-11-05: the live site opened on the Dell 3120 at school (school network, staff login). Still to do: confirm once with a student login, since filters can differ by account. |
 
 ## What's built now
@@ -89,7 +97,8 @@ The user (and later the pilot group) judges anything heard by ear. Claude measur
 - **Checks:** `npm run check` = TypeScript type check + Vitest. GitHub Actions runs them on every push and pull request; pushes to `main` that pass are published to GitHub Pages ([.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)).
 - **Paths:** the site lives at `/GPSdance/` (`base` in `vite.config.ts`), in dev and preview too.
 - **Versions:** pinned exactly in `package.json` (Vite 8.3.5, React 19.3.1, TypeScript 7.0.2, Vitest 5.1.0; audio: signalsmith-stretch 1.3.2, web-audio-beat-detector 8.2.39, @breezystack/lamejs 1.2.7), Node 22 (`.nvmrc`).
-- **Two pages:** `index.html` (device check) and `poc/index.html` (tests 1–4), both listed in `build.rollupOptions.input` in `vite.config.ts`.
+- **Three pages:** `index.html` (device check), `poc/index.html` (tests 1–4) and `drive-test/index.html` (test 5), all listed in `build.rollupOptions.input` in `vite.config.ts`.
+- **Google code** ([src/google/](../../src/google/)), meant to carry over to the real app: [config.ts](../../src/google/config.ts) (client ID, Picker key, project number: all public by design), [google.ts](../../src/google/google.ts) (sign-in with a token kept in memory only, the Picker, Drive calls; uploads are resumable, so no 5 MB limit), [gpsmix.ts](../../src/google/gpsmix.ts) (write and read the `.gpsmix` zip; songs stored uncompressed).
 
 ## Proof-of-concept page (tests 1–4)
 
@@ -98,11 +107,15 @@ At `/GPSdance/poc/` (code in [src/poc/](../../src/poc/), its own entry `poc/inde
 - **Songs** are picked with the browser's file chooser (on a Chromebook that includes Google Drive). Nothing is uploaded.
 - **Keep in memory:** whole songs, or only the parts the mix uses (`?keep=parts` in the address; switching reloads the page so memory starts fresh).
 - **Test mix:** the first 8 songs, 75 s each from 30 s in, 3-second crossfades, about 10 minutes ([mixPlan.ts](../../src/poc/mixPlan.ts)). The same plan drives live playback and the offline render, so they match.
-- **Speed:** Signalsmith Stretch rendered offline (`OfflineAudioContext` + its audio worklet). **BPM:** web-audio-beat-detector `guess()`; version 8.2.39 returns only the rounded BPM and first beat (no exact tempo), so the click-along can drift slightly late in long songs. **MP3:** 192 kbps in a Web Worker ([mp3.worker.ts](../../src/poc/mp3.worker.ts)), so lamejs is bundled as its own file.
+- **Speed:** 50%, 60%, 75%, 90% and 110%, Signalsmith Stretch rendered offline (`OfflineAudioContext` + its audio worklet). **BPM:** web-audio-beat-detector `guess()`; version 8.2.39 returns only the rounded BPM and first beat (no exact tempo), so the click-along can drift slightly late in long songs. **MP3:** 192 kbps in a Web Worker ([mp3.worker.ts](../../src/poc/mp3.worker.ts)), so lamejs is bundled as its own file.
 - **Copy all results** puts a text summary with PASS/FAIL marks (limits from the table above) on the clipboard. Tab memory can't be read by the page on GitHub Pages, so the tester types it in from Chrome's Task Manager (Search + Esc).
 
-## Setup the user does (click-by-click steps when we get there)
+## Test 5 page (Drive sharing)
 
-1. A **personal Google Cloud project** (Gmail), in testing mode, with two test Gmail accounts. That gives an OAuth client ID and a Picker API key, both fine in public code.
-2. Turn on **GitHub Pages** for the repo (built by Actions).
+At `/GPSdance/drive-test/` (code in [src/drivetest/](../../src/drivetest/)). Steps on the page: sign in as Gmail A → pick a song from Drive → save as a project (`.gpsmix` in My Drive, type `application/zip`) → share it in Drive → switch to Gmail B → open it (the Picker's second tab is "Shared with me") → try saving a change. Drive's `capabilities.canEdit` decides editor vs. play-only. A "What happened" list records each step. In the test project's `project.json`, only the title, song list and a save counter.
+
+## Setup the user does
+
+1. **Done 2026-11-10:** personal Google Cloud project **GPSdance test** (project number 1079259439393), owned by the user's Gmail, in testing mode with two test Gmail accounts. Drive API and Google Picker API on; consent screen External, scope `drive.file` only; OAuth client "GPSdance web" (JavaScript origins `http://localhost:5173` and `https://chrishudson918.github.io`, no redirect URIs); API key "GPSdance Picker key" (Google Picker API only, no website restriction; see LESSONS.md).
+2. **Done:** **GitHub Pages** for the repo (built by Actions).
 3. Later: the district Google Cloud project + Admin console trust (the coworker), and the final address allowed through the web filter.

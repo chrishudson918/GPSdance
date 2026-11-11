@@ -45,7 +45,7 @@ Three sources, shown together in one picker:
 - Play/pause and seeking on a large, easy-to-use screen.
 - **Named sections** (markers set in the editor, e.g. "Chorus", "Turn sequence") to jump straight to a part.
 - **Loop** a section.
-- **Practice speed** (e.g. 80%) without changing pitch or the mix itself.
+- **Practice speed** (e.g. 80%) without changing pitch or the mix itself. Typical use (the user, 2026-11-10): students aren't hitting the moves fast enough or in sync, so the instructor stops, picks a slower speed, plays the section again, and later goes back to full speed. The speed doesn't need to change while the music plays. How slow depends on the song and how much trouble the class is having.
 - **Metronome count-in** at the song's BPM before a section starts (practice only).
 - **Countdown / delay start:** press play, walk to position, the music starts after N seconds.
 - **Set list:** line several routines up in show order for a long show. One long mix also works.
@@ -67,7 +67,7 @@ Three sources, shown together in one picker:
 ## 7. Technical constraints
 
 - **Static web app:** HTML/JS/CSS only, no backend and no database of our own. Projects are files in the user's Drive.
-- **Google permissions:** the narrowest Drive access possible (the app sees only files the user picks or the app created), so the district can trust the app without Google's full app review. Exact scopes to be confirmed.
+- **Google permissions:** the narrowest Drive access possible (the app sees only files the user picks or the app created), so the district can trust the app without Google's full app review. Scope: `drive.file` only, confirmed enough for Editor/Viewer sharing by test 5 (2026-11-10).
 - **Everything served from the app's own address:** no outside CDNs for code, fonts, sounds or the speech model. The district web filter can't be changed by the user, so the app should need only one allowed address (plus Google's own sign-in and Drive).
 - **Hosting:** GitHub Pages (public repo, on the user's personal GitHub) while building and testing. Then **Firebase Hosting in the district's Google Cloud project** for the final product.
 - **No secrets in the code.** A browser app's Google client ID is public by design.

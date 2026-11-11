@@ -62,5 +62,5 @@ export function readGpsmix(bytes: Uint8Array): OpenedProject {
 
 /** A safe path inside the zip for a song file name. */
 export function songPath(index: number, name: string): string {
-  return `songs/${index + 1}-${name.replace(/[^\w.\- ]+/g, '_')}`;
+  return `audio/${index + 1}-${name.replace(/[^\w.\- ]+/g, '_')}`;
 }
