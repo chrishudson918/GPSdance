@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Editor mockups · GPSdance</title>
+  <style>
+    :root { font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif; color-scheme: dark; }
+    body { margin: 0; background: #17181c; color: #eceef2; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 40px; }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    .lead { color: #9aa0ab; margin: 0 0 22px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .card { background: #23252b; border: 1px solid #3a3d46; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; }
+    .card h2 { margin: 0 0 4px; font-size: 18px; }
+    .card ul { padding-left: 18px; margin: 10px 0 14px; color: #c9cdd4; line-height: 1.45; font-size: 14px; flex: 1; }
+    .open { display: inline-block; text-align: center; padding: 10px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; color: #0b0c0f; }
+    .sw { display: flex; gap: 4px; margin-top: 2px; }
+    .sw span { width: 22px; height: 10px; border-radius: 3px; }
+    section { margin-top: 26px; background: #1f2126; border: 1px solid #3a3d46; border-radius: 12px; padding: 14px 18px; }
+    section h3 { margin: 0 0 6px; font-size: 16px; }
+    section ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.55; color: #c9cdd4; font-size: 14px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Editor mockups</h1>
+  <p class="lead">Three clickable versions of the Editor. There is no real sound, but every button and drag works.
+    All three use a dark look, one row per song, a fixed toolbar, trimming by dragging edges, overlap = crossfade,
+    and zoom-in-and-drag to censor a word. They differ in where the toolbar sits, how tall the rows are, the colors,
+    and where a song's settings (speed, beat, volume) appear.</p>
+
+  <div class="cards">
+    <div class="card">
+      <h2>Option A</h2>
+      <div class="sw"><span style="background:#4f8cff"></span><span style="background:#ff9f43"></span><span style="background:#2ed47a"></span><span style="background:#c86bfa"></span></div>
+      <ul>
+        <li>Toolbar across the <b>top</b>, with a hint for the picked song</li>
+        <li>Medium rows</li>
+        <li>Bright colors</li>
+        <li>Song settings are always visible <b>beside each row</b>: Speed −/+, BPM (click to fix) and Volume −/+</li>
+      </ul>
+      <a class="open" href="a.html" style="background:#4f8cff">Open option A</a>
+    </div>
+    <div class="card">
+      <h2>Option B</h2>
+      <div class="sw"><span style="background:#86a8e7"></span><span style="background:#e0b07d"></span><span style="background:#8fc3a8"></span><span style="background:#b9a3e3"></span></div>
+      <ul>
+        <li>Toolbar down the <b>left side</b></li>
+        <li>Tall rows with a big waveform</li>
+        <li>Soft colors</li>
+        <li>Song settings in a <b>pop-up</b> (the Speed button, the Settings button on the row, or a double-click on the song)</li>
+      </ul>
+      <a class="open" href="b.html" style="background:#86a8e7">Open option B</a>
+    </div>
+    <div class="card">
+      <h2>Option C</h2>
+      <div class="sw"><span style="background:#00e5ff"></span><span style="background:#ff3df2"></span><span style="background:#b6ff00"></span><span style="background:#ffb000"></span></div>
+      <ul>
+        <li>Toolbar along the <b>bottom</b>, with bigger buttons</li>
+        <li>Slim rows, so more songs fit without scrolling</li>
+        <li>Neon colors on near-black</li>
+        <li>A <b>settings strip</b> above the toolbar shows the picked song's speed, beat, volume and fades</li>
+      </ul>
+      <a class="open" href="c.html" style="background:#00e5ff">Open option C</a>
+    </div>
+  </div>
+
+  <section>
+    <h3>Things to try in each one</h3>
+    <ul>
+      <li>Click a song, then drag its <b>left or right edge</b> to trim it. Drag the middle to move it.</li>
+      <li>Drag the <b>white dots</b> at a song's top corners to fade in or out.</li>
+      <li>Drag a song so it <b>overlaps</b> the one above: that makes a crossfade. Click the label between them, then <b>Transition</b>, to make it beat-matched or a sound-effect bridge.</li>
+      <li>Click the ruler to move the white line, pick a song, press <b>Split</b>, then <b>Delete</b> a piece.</li>
+      <li>Press <b>Censor</b>, drag across a "word", then Listen and nudge it.</li>
+      <li>Fix a wrong BPM (tap along or type it), try <b>One tempo</b> in the top bar, add a <b>Sound effect</b> and a <b>Section</b>, then <b>Export</b>.</li>
+      <li><b>Undo</b> anything (Ctrl+Z). Space plays and pauses.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Questions for you</h3>
+    <ul>
+      <li>Which toolbar spot feels best on the Dell 3120: top, left or bottom?</li>
+      <li>Which row height: tall (B), medium (A) or slim (C)?</li>
+      <li>Where should a song's settings live: beside the row (A), in a pop-up (B) or in the strip (C)?</li>
+      <li>Which colors? Mixing is fine, e.g. "A's layout with C's colors".</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
