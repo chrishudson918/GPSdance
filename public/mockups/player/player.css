@@ -33,10 +33,9 @@ a.btn { text-decoration: none; color: var(--text); }
 .setlist { background: var(--panel); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-height: 0; }
 .sl-head { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); font-weight: 700; }
 .sl-list { flex: 1; overflow: auto; padding: 6px; }
-.sl-item { display: grid; grid-template-columns: 18px 22px 1fr auto; align-items: center; gap: 6px; padding: 9px 8px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
+.sl-item { display: grid; grid-template-columns: 0 22px 1fr auto; align-items: center; gap: 6px; padding: 9px 8px; border-radius: 8px; cursor: pointer; border: 1px solid transparent; }
 .sl-item:hover { background: var(--panel2); }
 .sl-item.cur { background: color-mix(in srgb, var(--accent) 22%, transparent); border-color: var(--accent); }
-.sl-item.dragging { opacity: .4; }
 .sl-grip { color: var(--muted); cursor: grab; text-align: center; }
 .sl-num { color: var(--muted); font-variant-numeric: tabular-nums; }
 .sl-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }

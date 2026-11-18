@@ -10,6 +10,7 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 ## Now
 
 - Chromebook proof of concept (6 tests; [design/tech-stack.md](design/tech-stack.md)), the build-vs-buy decision point. All six have passed; left: test 5 on the Chromebook from the live address, test 6 with a student login, and fixing the Picker key's website restriction.
+- Long-show memory test on the Dell 3120 (about 30 minutes, 10 songs, loading only what's needed), before the build relies on "set list = the project's song order". See [design/player.md](design/player.md).
 
 ## Done
 
@@ -21,10 +22,11 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 - Proof-of-concept page for tests 1–4 built and live (2026-11-10).
 - Tests 1–4 passed on the Dell 3120 with real songs, keeping only the parts the mix uses (2026-11-10).
 - Google Cloud test project set up; test 5 (Drive sharing) page built and passed on the user's PC (2026-11-10).
+- Editor and Player mockups (three clickable options each); the user picked option A for both (2026-11-18). [design/editor.md](design/editor.md), [design/player.md](design/player.md).
 
 ## Next
 
-- Editor and Player mockups.
+- Editor build plan (interview: build order, first runnable version), then the build.
 - Pilot group set up.
 
 ## Later
@@ -43,3 +45,5 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 - Vocal-only word removal (stem separation): too heavy for Chromebooks; reversing is enough. (User, 2026-11-05)
 - Live Google Docs-style co-editing: needs a server; one editor at a time is enough. (User, 2026-11-05)
 - Server or paid cloud processing: on-device is free and private. (User, 2026-11-05)
+- Countdown / delay start in the Player: Play should start right away; the count-in is enough. (User, 2026-11-18)
+- Reordering or adding songs in the Player: the Player is playback only; the order comes from the Editor. (User, 2026-11-18)

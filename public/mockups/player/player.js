@@ -29,16 +29,17 @@
   const esc = (t) => String(t).replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
   const fmt = (t) => { t = Math.max(0, t); const m = Math.floor(t / 60); return `${m}:${String(Math.floor(t - m * 60)).padStart(2, '0')}`; };
 
-  // ---------- Fake routines (in the real app: .gpsmix projects from Drive) ----------
+  // ---------- Fake project (in the real app: one .gpsmix project from Drive) ----------
+  // The set list is simply the songs of the project, in the order they have in the
+  // Editor. The Player can't reorder, add or remove them (decided 2026-11-18).
+  const PROJECT = 'Spring Showcase - Varsity';
   const ROUTINES = {
-    r1: { name: 'Varsity – Spring Showcase', dur: 286, bpm: 124, seed: 3, sections: [
-      { n: 'Opening', t: 0 }, { n: 'Turn sequence', t: 34 }, { n: 'Chorus', t: 80 }, { n: 'Floor work', t: 157 }, { n: 'Big finish', t: 215 }] },
-    r2: { name: 'JV – Hip Hop', dur: 190, bpm: 100, seed: 8, sections: [
-      { n: 'Intro', t: 0 }, { n: 'Verse 1', t: 16 }, { n: 'Hit combo', t: 62 }, { n: 'Freestyle', t: 118 }, { n: 'Ending', t: 160 }] },
-    r3: { name: 'Pom – Halftime', dur: 150, bpm: 132, seed: 14, sections: [
-      { n: 'Entrance', t: 0 }, { n: 'Kick line', t: 28 }, { n: 'Formation change', t: 75 }, { n: 'Finale', t: 120 }] },
+    r1: { name: 'Neon Skyline', dur: 84, bpm: 124, seed: 3, sections: [{ n: 'Opening', t: 0 }, { n: 'Turn sequence', t: 34 }] },
+    r2: { name: 'Run It Back', dur: 77, bpm: 128, seed: 8, sections: [{ n: 'Chorus', t: 0 }, { n: 'Hit combo', t: 40 }] },
+    r3: { name: 'Golden Hour Drums', dur: 58, bpm: 120, seed: 14, sections: [{ n: 'Floor work', t: 0 }, { n: 'Kick line', t: 28 }] },
+    r4: { name: 'Midnight Bounce', dur: 70, bpm: 120, seed: 21, sections: [{ n: 'Big finish', t: 0 }, { n: 'Final pose', t: 52 }] },
   };
-  const S = { order: ['r1', 'r2', 'r3'], cur: 'r1', t: 0, playing: false, speed: 100, countIn: 4, loopSec: null, loopCount: true, big: false, setOpen: true, busy: null };
+  const S = { order: ['r1', 'r2', 'r3', 'r4'],cur: 'r1', t: 0, playing: false, speed: 100, countIn: 4, loopSec: null, loopCount: true, big: false, setOpen: true, busy: null };
   const R = () => ROUTINES[S.cur];
   const secIndexAt = (r, t) => { let i = 0; r.sections.forEach((s, k) => { if (s.t <= t + 1e-6) i = k; }); return i; };
   const secEnd = (r, i) => (i + 1 < r.sections.length ? r.sections[i + 1].t : r.dur);
@@ -109,9 +110,9 @@
 
   function setlistHTML() {
     return `<aside class="setlist"><div class="sl-head">${icon('list', 18)} Set list<span class="flex"></span><button class="btn small" data-a="set">Hide</button></div>
-      <div class="sl-list">${S.order.map((id, i) => `<div class="sl-item ${id === S.cur ? 'cur' : ''}" draggable="true" data-r="${id}">
-        <span class="sl-grip" title="Drag to reorder">⋮⋮</span><span class="sl-num">${i + 1}.</span><span class="sl-name">${esc(ROUTINES[id].name)}</span><span class="muted">${fmt(ROUTINES[id].dur)}</span></div>`).join('')}</div>
-      <div class="sl-foot">Drag to change the order. When a routine ends, the next one starts right away.<br><br><button class="btn small" data-a="addr">+ Add a routine</button></div></aside>`;
+      <div class="sl-list">${S.order.map((id, i) => `<div class="sl-item ${id === S.cur ? 'cur' : ''}" data-r="${id}" title="Play from here">
+        <span class="sl-grip"></span><span class="sl-num">${i + 1}.</span><span class="sl-name">${esc(ROUTINES[id].name)}</span><span class="muted">${fmt(ROUTINES[id].dur)}</span></div>`).join('')}</div>
+      <div class="sl-foot">The songs of this project, in the Editor's order. Each one flows straight into the next.<br>To change the order, open the project in the Editor.</div></aside>`;
   }
 
   // ---------- Page ----------
@@ -122,7 +123,7 @@
     app.innerHTML = `
       <div class="banner"><b>MOCKUP, Player option ${OPT}:</b> ${TAGLINES[OPT]}. Clicks work; there is no real sound.
         <span class="flex"></span>Compare: ${opts} <a href="index.html">All options</a> <a href="../editor/a.html">Editor</a></div>
-      <div class="header"><span class="logo">GPSdance</span><span class="htitle">Player</span><span class="flex"></span>
+      <div class="header"><span class="logo">GPSdance</span><span class="htitle">Player</span><span class="muted">${esc(PROJECT)}</span><span class="flex"></span>
         <button class="btn ${S.setOpen ? 'on' : ''}" data-a="set">${icon('list', 16)} Set list</button>
         <button class="btn ${S.big ? 'on' : ''}" data-a="big">${icon(S.big ? 'small' : 'big', 16)} ${S.big ? 'Normal view' : 'Big view'}</button>
         <a class="btn" href="../editor/a.html" title="Only shown if you can edit this project">Open in Editor</a></div>
@@ -240,7 +241,6 @@
       if (act === 'big') { S.big = !S.big; render(); return; }
       if (act === 'set') { S.setOpen = !S.setOpen; render(); return; }
       if (act === 'loopcount') { S.loopCount = a.checked; return; }
-      if (act === 'addr') { toast('In the real app this opens Google\'s file picker to pick a project.'); return; }
       if (act === 'prev' || act === 'next') {
         const r = R(), i = secIndexAt(r, S.t);
         const to = act === 'next' ? Math.min(r.sections.length - 1, i + 1) : (S.t - r.sections[i].t > 2 || i === 0 ? i : i - 1);
@@ -269,18 +269,6 @@
     }
     if (ri && !e.target.closest('.sl-grip')) { if (ri.dataset.r !== S.cur) { S.cur = ri.dataset.r; S.t = 0; S.loopSec = null; S.busy = null; render(); } }
   });
-
-  // Set list drag-to-reorder.
-  let dragId = null;
-  document.addEventListener('dragstart', (e) => { const it = e.target.closest('[data-r]'); if (!it) return; dragId = it.dataset.r; it.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; });
-  document.addEventListener('dragover', (e) => { if (dragId && e.target.closest('[data-r]')) e.preventDefault(); });
-  document.addEventListener('drop', (e) => {
-    const it = e.target.closest('[data-r]'); if (!dragId || !it) return; e.preventDefault();
-    const from = S.order.indexOf(dragId); S.order.splice(from, 1);
-    const to = S.order.indexOf(it.dataset.r), r = it.getBoundingClientRect();
-    S.order.splice(e.clientY > r.top + r.height / 2 ? to + 1 : to, 0, dragId); dragId = null; render();
-  });
-  document.addEventListener('dragend', () => { dragId = null; document.querySelectorAll('.dragging').forEach((x) => x.classList.remove('dragging')); });
 
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') { e.preventDefault(); document.querySelector('[data-a="play"]').click(); }

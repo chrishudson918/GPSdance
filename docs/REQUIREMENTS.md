@@ -26,6 +26,7 @@
   - sound-effect bridge: an effect (whoosh, boom, riser…) placed over the change.
 - **One tempo for the whole mix** (optional): pick a target BPM and every song is stretched to it.
 - **Tempo detection:** the app finds each song's BPM and beats automatically. It can be adjusted by hand if it guesses wrong.
+- **Time, measures and 8-counts** (added 2026-11-18): a toolbar switch shows the timeline in minutes:seconds, measures or 8-counts. The grid follows each song's tempo and time signature (4/4 by default; 3/4 or 6/8 per song), with tempo flags where the BPM changes. Each song's "1" can be fixed by hand. Snap to grid on/off; grid lines at 1/2, 1/4, 1/8 or 1/16 notes. Details: [design/editor.md](design/editor.md).
 - **Volume leveling:** bring every song in a mix to the same loudness.
 - **Censor by hand:** mark a word's start and end; the app plays that slice backward (reverse).
 - **Undo/redo**, unlimited while editing.
@@ -47,8 +48,9 @@ Three sources, shown together in one picker:
 - **Loop** a section.
 - **Practice speed** (e.g. 80%) without changing pitch or the mix itself. Typical use (the user, 2026-11-10): students aren't hitting the moves fast enough or in sync, so the instructor stops, picks a slower speed, plays the section again, and later goes back to full speed. The speed doesn't need to change while the music plays. How slow depends on the song and how much trouble the class is having.
 - **Metronome count-in** at the song's BPM before a section starts (practice only).
-- **Countdown / delay start:** press play, walk to position, the music starts after N seconds.
-- **Set list:** line several routines up in show order for a long show. One long mix also works.
+- **Set list:** the songs of the project, in the order they have in the Editor; when one ends the next plays right away. No separate set list files, and the Player can't change the order (changed 2026-11-18). A whole show can be one long project.
+- **Play starts right away.** No countdown / delay start (dropped by the user 2026-11-18).
+- The Player is the easy playback tool, with as little editing as possible. Details: [design/player.md](design/player.md).
 
 ## 5. Sharing and versions (R1)
 

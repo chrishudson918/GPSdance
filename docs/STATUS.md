@@ -1,22 +1,25 @@
 # Status
 
-**Updated:** 2026-11-10 · **Deadline:** January 1, 2027 (R1 features), 52 days away
+**Updated:** 2026-11-18 · **Deadline:** January 1, 2027 (R1 features), 44 days away
 
 ## Where things stand
 
 - Discovery, [VISION.md](VISION.md), [REQUIREMENTS.md](REQUIREMENTS.md), the [tech stack](design/tech-stack.md) and the build-vs-buy recommendation are approved (build; GoldWave Infinity trial as the fallback). Shared doc: https://claude.ai/artifact/2XYgz1csbokRFJyseGsAtk.
-- **The proof of concept supports building it ourselves: all six tests have passed.** Numbers are in [design/tech-stack.md](design/tech-stack.md), "Results so far".
-  - Tests 1–4 on the Dell 3120 with 8 real songs: they pass **only when the app keeps just the parts of each song the mix uses** (tab 279 MB). Whole songs fail (831 MB, and a crash). That's now a design rule.
-  - Practice speeds: 75% sounds clean; 60% and 50% have some warble but are usable for practice.
-  - Test 5 (Drive sharing) passed on this PC: a `.gpsmix` shared as Viewer opens play-only, and shared as Editor it opens editable, using only `drive.file`.
-- **Live pages:** https://chrishudson918.github.io/GPSdance/ (device check), `/poc/` (tests 1–4), `/drive-test/` (test 5).
-- **Google Cloud test project** "GPSdance test" is set up (details in tech-stack.md, "Setup"). Its Picker key has **no website restriction**, because the Picker rejected the key with one. The key is still limited to the Picker API. See [LESSONS.md](LESSONS.md), "Google".
+- **The proof of concept passed all six tests** (numbers in [design/tech-stack.md](design/tech-stack.md)). Design rule from tests 1–4: keep only the parts of each song the mix uses in memory.
+- **Mockups done; option A picked for both screens** (2026-11-18). Decisions: [design/editor.md](design/editor.md) and [design/player.md](design/player.md).
+  - Editor: dark look, one row per song, toolbar on top, settings beside each row; a Time / Measures / 8-counts ruler with a grid that follows each song's tempo (settled now because it changes the project file).
+  - Player: playback only; Play starts right away; speed presets; count-in on section jumps; a Big view for across the room.
+  - **Set list = the project's song order in the Editor**, no extra files. A whole show can be one long project, so the app must load only what's needed.
+- **Live pages:** https://chrishudson918.github.io/GPSdance/ (device check), `/poc/` (tests 1–4), `/drive-test/` (test 5), `/mockups/editor/` and `/mockups/player/` (mockups, no real audio).
+- **Google Cloud test project** "GPSdance test" is set up. Its Picker key has no website restriction (the Picker rejected the key with one); see [LESSONS.md](LESSONS.md), "Google".
 
 ## Next
 
-1. **Editor and Player mockups** (options first; the user picks before anything is built). Things to bring in: keeping only the parts in memory, a "Getting it ready…" message for practice speed, a progress bar for MP3 export, fixing a wrong BPM by hand, and maybe a hint that very slow speeds sound rougher (just an idea, not agreed).
-2. Run test 5 on the Dell 3120 from the live address (`/drive-test/`), to check that the Picker gets through the web filter.
-3. Work out the Picker key's website restriction before the district's real key is made.
+1. **Long-show memory test on the Dell 3120:** about 30 minutes, 10 songs, with the Player holding only the current and next song. It decides whether "set list = song order" works as planned.
+2. **Editor build plan:** interview the build order and the first runnable version, then build after the user's OK.
+3. Run test 5 on the Dell from the live address (`/drive-test/`), to check that the Picker gets through the web filter.
+4. Work out the Picker key's website restriction before the district's real key is made.
+5. Once the first build runs: review the user's UX ideas parked in design/editor.md (toolbar buttons, row resizing, wheel zoom).
 
 ## Waiting on the user (no rush)
 
@@ -29,6 +32,8 @@
 
 ## Not checked yet
 
+- The mockups on the Dell itself (only checked at Dell size in a browser on the PC).
 - Test 5 on the Chromebook and from the live address.
 - Anything on a district Windows PC.
-- Crossfades judged by ear (the mix played with no stutter, but transition quality wasn't rated).
+- Crossfades judged by ear.
+- How 8-counts are numbered through a 3/4 or 6/8 song (decide when the ruler is built).
