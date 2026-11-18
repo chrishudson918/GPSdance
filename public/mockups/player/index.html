@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Player mockups · GPSdance</title>
+  <style>
+    :root { font-family: system-ui, "Segoe UI", Roboto, Arial, sans-serif; color-scheme: dark; }
+    body { margin: 0; background: #17181c; color: #eceef2; }
+    main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 40px; }
+    h1 { margin: 0 0 6px; font-size: 24px; }
+    .lead { color: #9aa0ab; margin: 0 0 22px; line-height: 1.5; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .card { background: #23252b; border: 1px solid #3a3d46; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; }
+    .card h2 { margin: 0 0 4px; font-size: 18px; }
+    .card ul { padding-left: 18px; margin: 10px 0 14px; color: #c9cdd4; line-height: 1.45; font-size: 14px; flex: 1; }
+    .open { display: inline-block; text-align: center; padding: 10px 14px; border-radius: 8px; font-weight: 700; text-decoration: none; color: #0b0c0f; background: #4f8cff; }
+    section { margin-top: 26px; background: #1f2126; border: 1px solid #3a3d46; border-radius: 12px; padding: 14px 18px; }
+    section h3 { margin: 0 0 6px; font-size: 16px; }
+    section ul { margin: 6px 0 0; padding-left: 18px; line-height: 1.55; color: #c9cdd4; font-size: 14px; }
+    a { color: #4f8cff; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Player mockups</h1>
+  <p class="lead">Three clickable versions of the practice Player, in the Editor's option A look. There is no real sound, but the clock,
+    8-count, sections, loops, count-in, speeds and set list all work. All three share the features you picked; they differ in how
+    progress is shown, where the controls sit, and how the <b>Big view</b> (for across the room) is laid out.
+    <a href="../editor/">Editor mockups</a></p>
+
+  <div class="cards">
+    <div class="card">
+      <h2>Option A</h2>
+      <ul>
+        <li>A <b>waveform</b> of the whole routine, colored by section</li>
+        <li>Controls in a bar along the <b>bottom</b></li>
+        <li>Big view <b>stacked</b>: section name, a giant 8-count · beat, then the time</li>
+      </ul>
+      <a class="open" href="a.html">Open option A</a>
+    </div>
+    <div class="card">
+      <h2>Option B</h2>
+      <ul>
+        <li>A thick <b>progress bar</b> with the sections marked on it</li>
+        <li>Controls in the <b>middle</b>: big Play between previous/next section</li>
+        <li>Big view in <b>three columns</b>: section, 8-count, time</li>
+      </ul>
+      <a class="open" href="b.html">Open option B</a>
+    </div>
+    <div class="card">
+      <h2>Option C</h2>
+      <ul>
+        <li>A <b>big clock</b> with a slim progress bar</li>
+        <li>Controls in a panel on the <b>right</b></li>
+        <li>Big view with eight <b>beat dots</b> that light up on each count</li>
+      </ul>
+      <a class="open" href="c.html">Open option C</a>
+    </div>
+  </div>
+
+  <section>
+    <h3>Things to try in each one</h3>
+    <ul>
+      <li>Press <b>Play</b> (or Space): it starts right away, with no count-in.</li>
+      <li>Click a <b>section button</b>: it jumps there and counts in first (Count-in 4 = "5, 6, 7, 8"; 8 = a full 8-count; Off = no count-in).</li>
+      <li>Press a section's <b>loop</b> icon. Turn "Count-in between loop passes" on and off to compare.</li>
+      <li>Pick a <b>practice speed</b>: you'll see "Getting it ready…", then it carries on.</li>
+      <li>Switch to <b>Big view</b> and step back from the screen. Esc or "Normal view" goes back.</li>
+      <li>Drag routines in the <b>set list</b> to reorder them. Click near the end of the progress to see the next routine start by itself.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h3>Questions for you</h3>
+    <ul>
+      <li>Which progress display: waveform (A), bar (B) or big clock (C)?</li>
+      <li>Where should the controls be: bottom (A), middle (B) or right (C)?</li>
+      <li>Which Big view reads best from across the room on the Dell?</li>
+      <li>Mixing is fine, e.g. "A's waveform with C's Big view".</li>
+    </ul>
+  </section>
+</main>
+</body>
+</html>
