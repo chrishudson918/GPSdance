@@ -64,6 +64,9 @@ export default function App() {
       <p className="small">
         <a href="poc/">Chromebook tests 1–4 (proof of concept)</a>
       </p>
+      <p className="small">
+        <a href="long-show/">Long-show memory test</a>
+      </p>
 
       <footer className="muted small">Commit {build.commit}</footer>
     </main>

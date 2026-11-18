@@ -317,3 +317,38 @@ button.primary {
 .log {
   padding-left: 20px;
 }
+
+/* Long-show test: the song list (the playing song is marked) and the "What happened" lines. */
+.steps {
+  padding-left: 20px;
+  margin: 4px 0;
+}
+
+.show-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0;
+}
+
+.show-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.show-list li .song-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.show-list li.now {
+  background: var(--bg);
+  font-weight: 600;
+}
+
+.log li.problem {
+  color: var(--fail);
+  font-weight: 600;
+}
