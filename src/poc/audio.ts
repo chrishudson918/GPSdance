@@ -6,10 +6,20 @@ import { guess } from 'web-audio-beat-detector';
 import type { MixPlan } from './mixPlan';
 
 let sharedContext: AudioContext | undefined;
+let preferredSampleRate: number | undefined;
+
+/**
+ * Runs the page's audio clock at this rate (e.g. 44100, the rate of most songs) instead of the
+ * device's (often 48000), so decoding a song doesn't also make a converted copy of it.
+ * Call before audio is first used. The long-show test uses it; tests 1-4 keep the device's rate.
+ */
+export function preferSampleRate(rate: number): void {
+  preferredSampleRate = rate;
+}
 
 /** One audio context for the whole page (Chrome limits how many a page can open). */
 export function audioContext(): AudioContext {
-  sharedContext ??= new AudioContext();
+  sharedContext ??= new AudioContext(preferredSampleRate ? { sampleRate: preferredSampleRate } : undefined);
   return sharedContext;
 }
 

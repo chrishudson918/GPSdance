@@ -39,6 +39,8 @@ export interface ShowSong {
 
 export interface ShowResults {
   device: string;
+  /** The page's audio clock rate in Hz (44100 asked for; the browser may refuse). */
+  sampleRate?: number;
   songs: ShowSong[];
   events: ShowEvent[];
   /** Most decoded audio held at once, MB (the page's own count). */
@@ -101,6 +103,7 @@ export function formatShowResults(r: ShowResults, build: { version: string; comm
   lines.push(`GPSdance long-show test (build ${build.version}, ${build.commit})`);
   lines.push(`When: ${when.toLocaleString('en-US')}`);
   lines.push(`Device: ${r.device}`);
+  if (r.sampleRate) lines.push(`Audio clock: ${r.sampleRate} Hz`);
   lines.push('');
 
   const totalMb = r.songs.reduce((sum, s) => sum + s.sizeMb, 0);

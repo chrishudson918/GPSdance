@@ -8,7 +8,15 @@ import {
   wavChunkDataBytes,
 } from './chunks';
 import { formatShowResults, type ShowResults } from './results';
-import { copyOffset, CROSSFADE_SECONDS, endClock, fadeLength, songTimeAt, songToLoad } from './showPlan';
+import {
+  copyOffset,
+  CROSSFADE_SECONDS,
+  endClock,
+  fadeLength,
+  mayLoadNext,
+  songTimeAt,
+  songToLoad,
+} from './showPlan';
 
 describe('showPlan', () => {
   it('tracks the song position at any speed', () => {
@@ -27,6 +35,13 @@ describe('showPlan', () => {
   it('keeps crossfades to 3 s, or half a very short song', () => {
     expect(fadeLength(200)).toBe(CROSSFADE_SECONDS);
     expect(fadeLength(4)).toBe(2);
+  });
+
+  it('waits after a jump before loading the next song, unless the end is near', () => {
+    expect(mayLoadNext(105, 115, 300)).toBe(false); // 10 s after a jump
+    expect(mayLoadNext(115, 115, 300)).toBe(true);
+    expect(mayLoadNext(105, 115, Infinity)).toBe(false); // quick start: length not known yet
+    expect(mayLoadNext(105, 115, 130)).toBe(true); // a short song: load now so it isn't late
   });
 
   it('holds only the playing song and the next', () => {
@@ -103,6 +118,7 @@ describe('formatShowResults', () => {
       build,
       new Date(2026, 10, 18),
     );
+    expect(text).not.toContain('Audio clock');
     expect(text).toContain('9:00 in all');
     expect(text).toContain('song changes: 2 (a full run has 2)');
     expect(text).toContain('Reached the end: yes');

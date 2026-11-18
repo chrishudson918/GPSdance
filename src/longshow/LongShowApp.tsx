@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { readDeviceInfo, runChecks } from '../deviceCheck';
 import { formatTime } from '../poc/mixPlan';
+import { audioContext } from '../poc/audio';
 import { ShowPlayer } from './engine';
 import { eventText, formatShowResults, jumpLimit, LIMITS, type LoadMode, type ShowEvent, type ShowSong } from './results';
 import { QUICK_START_SECONDS } from './chunks';
@@ -96,6 +97,7 @@ export default function LongShowApp() {
     const text = formatShowResults(
       {
         device: deviceText(),
+        sampleRate: audioContext().sampleRate,
         songs,
         events: snap.events,
         peakAudioMb: snap.peakAudioMb,
@@ -245,7 +247,7 @@ export default function LongShowApp() {
         <p className="small-text">
           Audio in memory: <strong>{Math.round(snap.audioMb)} MB</strong> (highest {Math.round(snap.peakAudioMb)} MB)
           {snap.held.length > 0 && ` · songs ${snap.held.map((i) => i + 1).join(' and ')}`} · played{' '}
-          {formatTime(snap.playedSeconds)}
+          {formatTime(snap.playedSeconds)} · audio clock {audioContext().sampleRate} Hz
         </p>
       </section>
 

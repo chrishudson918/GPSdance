@@ -13,7 +13,16 @@
 import { audioContext, bufferMb, changeSpeed, decodeFile, slicePart } from '../poc/audio';
 import { readQuickChunk } from './chunks';
 import type { JumpMode, LoadMode, ShowEvent } from './results';
-import { copyOffset, endClock, fadeLength, songTimeAt, songToLoad, type Anchor } from './showPlan';
+import {
+  copyOffset,
+  endClock,
+  fadeLength,
+  mayLoadNext,
+  NEXT_LOAD_DELAY_SECONDS,
+  songTimeAt,
+  songToLoad,
+  type Anchor,
+} from './showPlan';
 
 /** A decoded copy of a song, possibly slowed, possibly starting partway in (`from`, original seconds). */
 interface Held {
@@ -68,6 +77,8 @@ export class ShowPlayer {
   private held = new Map<number, Held>();
   private quickPart: AudioBuffer | null = null;
   private loading = new Set<number>();
+  /** Clock time before which the next song isn't loaded (set after a jump, speed change or resume). */
+  private holdNextUntil = 0;
   /** A song change that is scheduled but hasn't sounded yet; logged once it does (a pause or jump cancels it). */
   private pendingChange: { event: ShowEvent; at: number } | null = null;
   private paused: { index: number; songSeconds: number } | null = null;
@@ -122,6 +133,7 @@ export class ShowPlayer {
         this.quickPart = part;
         const at = ctx.currentTime + START_DELAY;
         const voice = this.startVoice(index, part, 0, 0, at, 0);
+        this.holdNextUntil = at + NEXT_LOAD_DELAY_SECONDS;
         this.logJump(index, clicked, at, rate, 'quick');
         this.beginPlaying();
 
@@ -135,6 +147,7 @@ export class ShowPlayer {
         this.held.set(index, whole);
         const at = ctx.currentTime + START_DELAY;
         this.setEnd(this.startVoice(index, whole.buffer, whole.from, 0, at, 0));
+        this.holdNextUntil = at + NEXT_LOAD_DELAY_SECONDS;
         const mode: JumpMode = this.loadMode === 'quick' && rate === 1 ? 'wholeFallback' : 'whole';
         this.logJump(index, clicked, at, rate, mode);
         this.beginPlaying();
@@ -234,6 +247,7 @@ export class ShowPlayer {
       }
       const at = ctx.currentTime + START_DELAY;
       this.setEnd(this.startVoice(index, copy.buffer, copy.from, songSeconds, at, 0));
+      this.holdNextUntil = at + NEXT_LOAD_DELAY_SECONDS;
       started(at);
       this.beginPlaying();
     } catch (err) {
@@ -329,7 +343,9 @@ export class ShowPlayer {
     if (next !== null) {
       const ready = this.held.get(next);
       if (ready) this.scheduleNext(current, next, ready, now);
-      else if (!this.loading.has(next)) void this.loadNext(next);
+      else if (!this.loading.has(next) && mayLoadNext(now, this.holdNextUntil, current.endClock)) {
+        void this.loadNext(next);
+      }
     }
     this.emit();
   };

@@ -37,6 +37,21 @@ export function fadeLength(realSeconds: number): number {
 }
 
 /**
+ * After a jump, speed change or resume, wait this long before loading the next song.
+ * Loading right away stacked two decodes on top of songs Chrome hadn't freed yet:
+ * the tab peaked at about 686 MB on the Dell 3120 (2026-11-18), while steady play stayed fine.
+ */
+export const NEXT_LOAD_DELAY_SECONDS = 15;
+
+/** Never wait so long that the next song could be late: start loading by this long before the end. */
+export const NEXT_LOAD_DEADLINE_SECONDS = 30;
+
+/** Whether loading the next song may start now (`holdUntil` = clock time set by a jump; end may be Infinity). */
+export function mayLoadNext(now: number, holdUntil: number, end: number): boolean {
+  return now >= holdUntil || end - now < NEXT_LOAD_DEADLINE_SECONDS;
+}
+
+/**
  * Which song to load next, or null. The rule being tested: hold only the playing song and the next.
  * While two songs are still sounding (a crossfade), nothing new loads; the old one is let go first.
  */
