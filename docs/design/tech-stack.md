@@ -97,7 +97,7 @@ The user (and later the pilot group) judges anything heard by ear. Claude measur
 - **Checks:** `npm run check` = TypeScript type check + Vitest. GitHub Actions runs them on every push and pull request; pushes to `main` that pass are published to GitHub Pages ([.github/workflows/deploy.yml](../../.github/workflows/deploy.yml)).
 - **Paths:** the site lives at `/GPSdance/` (`base` in `vite.config.ts`), in dev and preview too.
 - **Versions:** pinned exactly in `package.json` (Vite 8.3.5, React 19.3.1, TypeScript 7.0.2, Vitest 5.1.0; audio: signalsmith-stretch 1.3.2, web-audio-beat-detector 8.2.39, @breezystack/lamejs 1.2.7), Node 22 (`.nvmrc`).
-- **Three pages:** `index.html` (device check), `poc/index.html` (tests 1–4) and `drive-test/index.html` (test 5), all listed in `build.rollupOptions.input` in `vite.config.ts`.
+- **Four pages:** `index.html` (device check), `poc/index.html` (tests 1–4), `drive-test/index.html` (test 5) and `long-show/index.html` (long-show memory test), all listed in `build.rollupOptions.input` in `vite.config.ts`.
 - **Google code** ([src/google/](../../src/google/)), meant to carry over to the real app: [config.ts](../../src/google/config.ts) (client ID, Picker key, project number: all public by design), [google.ts](../../src/google/google.ts) (sign-in with a token kept in memory only, the Picker, Drive calls; uploads are resumable, so no 5 MB limit), [gpsmix.ts](../../src/google/gpsmix.ts) (write and read the `.gpsmix` zip; songs stored uncompressed).
 
 ## Proof-of-concept page (tests 1–4)
@@ -109,6 +109,16 @@ At `/GPSdance/poc/` (code in [src/poc/](../../src/poc/), its own entry `poc/inde
 - **Test mix:** the first 8 songs, 75 s each from 30 s in, 3-second crossfades, about 10 minutes ([mixPlan.ts](../../src/poc/mixPlan.ts)). The same plan drives live playback and the offline render, so they match.
 - **Speed:** 50%, 60%, 75%, 90% and 110%, Signalsmith Stretch rendered offline (`OfflineAudioContext` + its audio worklet). **BPM:** web-audio-beat-detector `guess()`; version 8.2.39 returns only the rounded BPM and first beat (no exact tempo), so the click-along can drift slightly late in long songs. **MP3:** 192 kbps in a Web Worker ([mp3.worker.ts](../../src/poc/mp3.worker.ts)), so lamejs is bundled as its own file.
 - **Copy all results** puts a text summary with PASS/FAIL marks (limits from the table above) on the clipboard. Tab memory can't be read by the page on GitHub Pages, so the tester types it in from Chrome's Task Manager (Search + Esc).
+
+## Long-show memory test page
+
+At `/GPSdance/long-show/` (code in [src/longshow/](../../src/longshow/)), linked from the device check. Tests the Player's plan of holding only the playing song and the next ([player.md](player.md)). It reuses the proof-of-concept audio code ([src/poc/audio.ts](../../src/poc/audio.ts)).
+
+- **Songs** play whole, in file-name order, with 3-second crossfades, as one continuous show. Only two are decoded at a time ([engine.ts](../../src/longshow/engine.ts)); the next one is decoded while the current plays, scheduled on the audio clock, and the finished one is let go. After a jump, speed change or resume, the next song waits 15 s before loading (less if the song is about to end).
+- **Jumps:** click any song. "Whole song first" decodes it all, then plays; "Quick start" decodes only the first 12+ s (MP3: cut the bytes after the ID3 tag; WAV: cut and rewrite the header; M4A: not possible, falls back to whole), plays at once, then swaps to the whole song at the same spot ([chunks.ts](../../src/longshow/chunks.ts)).
+- **Speeds** 50–100%: the current song is slowed from the playhead on (Signalsmith, offline), then carries on; the next song is made at that speed in the background.
+- **Audio clock at 44.1 kHz** (the rate of most songs), so decoding doesn't also make a converted copy. Shown on the page and in the results.
+- **What happened** log and **Copy results** with PASS/FAIL ([results.ts](../../src/longshow/results.ts)): song changes (how early the next song was ready), jumps (click to sound; 1 s at 100%, 10 s at a practice speed), quick-start swaps, speed changes (10 s), the page's own audio count, and the tab's peak from Task Manager (typed in).
 
 ## Test 5 page (Drive sharing)
 

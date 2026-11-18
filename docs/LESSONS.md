@@ -25,6 +25,8 @@ These were learned on sportio-tv and still apply here.
 
 - **Decoded audio is about 23 MB per stereo minute in Chrome** (32-bit floats at 48 kHz), not 10 MB. Holding whole songs fills memory fast; plan on keeping only the parts in use. Measured 2026-11-10.
 - **web-audio-beat-detector 8.2.39's `guess()` returns `{ bpm, offset }` only.** Its README also mentions `tempo`, but the code doesn't return it. Use `analyze()` for the unrounded tempo.
+- **Memory spikes when songs are loaded, not while they play.** On the Dell 3120 (2026-11-18), 40 minutes of straight play holding two songs was fine, but jumping between songs pushed the tab to about 686 MB while the page itself held only 215 MB. Songs that were let go aren't freed right away, and a decode briefly needs the file's bytes plus the decoded song (plus a converted copy when the song's rate differs from the audio clock's). Space loads out and avoid loading two songs back to back.
+- **Decoding a whole song takes 1.7–3.0 s on the Dell 3120** (MP3, about 4 minutes). Anything that must start "right away" has to play the first seconds while the rest decodes.
 - **Signalsmith Stretch works offline:** create it on an `OfflineAudioContext`, `addBuffers()` the song, then `start(0, 0, undefined, rate)`. The output is time-aligned (no latency shift); checked with a click track.
 
 ## Google (sign-in, Picker, Drive)
