@@ -164,6 +164,22 @@ describe('formatShowResults', () => {
     expect(bad).toContain('92% of the time allowed (limit 70%) (FAIL)');
   });
 
+  it('shows the dropout count with each event, when the browser counts them', () => {
+    const text = formatShowResults(
+      {
+        ...base,
+        events: [
+          { kind: 'jump', to: 0, seconds: 0.7, rate: 0.75, mode: 'quick', dropoutsSoFar: 1 },
+          { kind: 'swap', song: 0, spareSeconds: 25 },
+        ],
+      },
+      build,
+      new Date(2026, 10, 19),
+    );
+    expect(text).toContain('quick start (PASS) · dropouts so far: 1');
+    expect(text).toContain('25.0 s to spare (PASS)\n');
+  });
+
   it('says when dropouts or the speed tool were not measured', () => {
     const text = formatShowResults(base, build, new Date(2026, 10, 19));
     expect(text).toContain('not available in this browser');

@@ -9,7 +9,7 @@ export type LoadMode = 'whole' | 'quick';
 /** What a jump actually did ("wholeFallback": quick start was on, but this file type can't be cut). */
 export type JumpMode = 'whole' | 'quick' | 'wholeFallback';
 
-export type ShowEvent =
+export type ShowEvent = (
   /** The next song took over; `leadSeconds` = how early it was ready (negative = late, a gap). */
   | { kind: 'change'; from: number; to: number; leadSeconds: number; rate: number }
   /** A click on a song: seconds from the click to the first sound. */
@@ -19,7 +19,14 @@ export type ShowEvent =
   /** A new speed: seconds from the click until it played again (or was ready, if paused). */
   | { kind: 'speed'; song: number; rate: number; seconds: number; whilePlaying: boolean }
   | { kind: 'end' }
-  | { kind: 'error'; text: string };
+  | { kind: 'error'; text: string }
+) & {
+  /**
+   * Chrome's dropout count (see Dropouts) when this was logged, if the browser has it. Comparing it from
+   * one event to the next shows when the sound broke up (added 2026-11-19 after 3 unexplained dropouts).
+   */
+  dropoutsSoFar?: number;
+};
 
 export const LIMITS = {
   /** Tab memory in Chrome's Task Manager, MB. */
@@ -111,6 +118,11 @@ export function eventText(e: ShowEvent, names: string[]): string {
   }
 }
 
+/** The dropout count at the end of an event's line, or nothing if the browser can't count them. */
+export function dropoutsText(e: ShowEvent): string {
+  return e.dropoutsSoFar === undefined ? '' : ` · dropouts so far: ${e.dropoutsSoFar}`;
+}
+
 /** The plain-text summary for the clipboard. */
 export function formatShowResults(r: ShowResults, build: { version: string; commit: string }, when: Date): string {
   const names = r.songs.map((s) => s.name);
@@ -158,33 +170,33 @@ export function formatShowResults(r: ShowResults, build: { version: string; comm
 
   lines.push('Song changes (the next song must be ready before the crossfade)');
   if (changes.length === 0) lines.push('  None yet');
-  for (const e of changes) lines.push(`  ${eventText(e, names)}`);
+  for (const e of changes) lines.push(`  ${eventText(e, names)}${dropoutsText(e)}`);
   if (changes.length > 0) lines.push(`  Late: ${late.length}${passMark(late.length === 0)}`);
   lines.push('');
 
   lines.push(`Jumps (click to first sound; limit ${LIMITS.jumpSeconds} s at 100%, ${LIMITS.slowSeconds} s at a practice speed)`);
   const jumps = r.events.filter((e) => e.kind === 'jump');
   if (jumps.length === 0) lines.push('  None');
-  for (const e of jumps) lines.push(`  ${eventText(e, names)}${passMark(e.seconds < jumpLimit(e.rate))}`);
+  for (const e of jumps) lines.push(`  ${eventText(e, names)}${passMark(e.seconds < jumpLimit(e.rate))}${dropoutsText(e)}`);
   lines.push('');
 
   const swaps = r.events.filter((e) => e.kind === 'swap');
   if (swaps.length > 0) {
     lines.push('Quick start (the first part must not run out before the whole song is ready)');
-    for (const e of swaps) lines.push(`  ${eventText(e, names)}${passMark(e.spareSeconds >= 0)}`);
+    for (const e of swaps) lines.push(`  ${eventText(e, names)}${passMark(e.spareSeconds >= 0)}${dropoutsText(e)}`);
     lines.push('');
   }
 
   lines.push(`Speed changes (limit ${LIMITS.slowSeconds} s)`);
   const speeds = r.events.filter((e) => e.kind === 'speed');
   if (speeds.length === 0) lines.push('  None');
-  for (const e of speeds) lines.push(`  ${eventText(e, names)}${passMark(e.seconds < LIMITS.slowSeconds)}`);
+  for (const e of speeds) lines.push(`  ${eventText(e, names)}${passMark(e.seconds < LIMITS.slowSeconds)}${dropoutsText(e)}`);
 
   const errors = r.events.filter((e) => e.kind === 'error');
   if (errors.length > 0) {
     lines.push('');
     lines.push('Errors');
-    for (const e of errors) lines.push(`  ${eventText(e, names)}`);
+    for (const e of errors) lines.push(`  ${eventText(e, names)}${dropoutsText(e)}`);
   }
 
   if (r.notes.trim()) {

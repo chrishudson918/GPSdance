@@ -15,7 +15,7 @@
 import { audioContext, bufferMb, decodeFile } from '../poc/audio';
 import { readQuickChunk } from './chunks';
 import { LIVE_START_DELAY, LiveFeed, LoadMeter } from './liveStretch';
-import type { JumpMode, LoadMode, ShowEvent } from './results';
+import type { Dropouts, JumpMode, LoadMode, ShowEvent } from './results';
 import {
   endClock,
   fadeLength,
@@ -25,6 +25,14 @@ import {
   songToLoad,
   type Anchor,
 } from './showPlan';
+
+/** Chrome's count of moments the sound broke up since the page's audio started, if this browser has it. */
+export function readDropouts(): Dropouts | null {
+  const stats = (audioContext() as AudioContext & {
+    playbackStats?: { underrunEvents: number; underrunDuration: number };
+  }).playbackStats;
+  return stats ? { events: stats.underrunEvents, seconds: stats.underrunDuration } : null;
+}
 
 /** A song that is playing or scheduled to play. */
 interface Voice extends Anchor {
@@ -493,6 +501,8 @@ export class ShowPlayer {
   }
 
   private log(event: ShowEvent): void {
+    const dropouts = readDropouts();
+    if (dropouts) event = { ...event, dropoutsSoFar: dropouts.events };
     this.events = [...this.events, event];
     this.emit();
   }

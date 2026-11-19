@@ -6,13 +6,13 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { readDeviceInfo, runChecks } from '../deviceCheck';
 import { formatTime } from '../poc/mixPlan';
 import { audioContext } from '../poc/audio';
-import { ShowPlayer } from './engine';
+import { readDropouts, ShowPlayer } from './engine';
 import {
+  dropoutsText,
   eventText,
   formatShowResults,
   jumpLimit,
   LIMITS,
-  type Dropouts,
   type LoadMode,
   type ShowEvent,
   type ShowSong,
@@ -29,14 +29,6 @@ function deviceText(): string {
 }
 
 /** A song's length from the file's own information, without decoding it (cheap; for the song list only). */
-/** Chrome's count of moments the sound broke up since the page's audio started, if this browser has it. */
-function readDropouts(): Dropouts | null {
-  const stats = (audioContext() as AudioContext & {
-    playbackStats?: { underrunEvents: number; underrunDuration: number };
-  }).playbackStats;
-  return stats ? { events: stats.underrunEvents, seconds: stats.underrunDuration } : null;
-}
-
 function readLength(file: File): Promise<number | undefined> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -281,6 +273,7 @@ export default function LongShowApp() {
             {snap.events.map((e, i) => (
               <li key={i} className={isProblem(e) ? 'problem' : undefined}>
                 {eventText(e, names)}
+                {dropoutsText(e)}
               </li>
             ))}
           </ol>
