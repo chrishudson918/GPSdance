@@ -13,6 +13,7 @@ import {
   CROSSFADE_SECONDS,
   endClock,
   fadeLength,
+  hasSound,
   mayLoadNext,
   songTimeAt,
   songToLoad,
@@ -149,6 +150,44 @@ describe('formatShowResults', () => {
     expect(text).toContain('at 50%: sound in 6.0 s, whole song (PASS)');
     expect(text).toContain('LATE by 1.5 s');
     expect(text).toContain('Late: 1 (FAIL)');
+  });
+
+  it('lists slowed copies that came out silent', () => {
+    const clean = formatShowResults(
+      { ...base, events: [{ kind: 'slowCopy', song: 0, rate: 0.75, silent: false }] },
+      build,
+      new Date(2026, 10, 19),
+    );
+    expect(clean).toContain('1 made, 0 silent (PASS)');
+
+    const text = formatShowResults(
+      {
+        ...base,
+        events: [
+          { kind: 'slowCopy', song: 0, rate: 0.75, silent: false },
+          { kind: 'slowCopy', song: 1, rate: 0.75, silent: true },
+        ],
+      },
+      build,
+      new Date(2026, 10, 19),
+    );
+    expect(text).toContain('2 made, 1 silent (FAIL)');
+    expect(text).toContain('Slowed copy of song 2 "song2.mp3" at 75%: SILENT (no sound)');
+    expect(text).not.toContain('song 1 "song1.mp3" at 75%');
+  });
+
+  it('leaves out the slowed-copies section when none were made', () => {
+    expect(formatShowResults(base, build, new Date(2026, 10, 19))).not.toContain('Slowed copies');
+  });
+});
+
+describe('hasSound', () => {
+  it('tells silence from music', () => {
+    expect(hasSound([new Float32Array(1000)])).toBe(false);
+    expect(hasSound([new Float32Array(1000).fill(0.0005)])).toBe(false); // below the silence level
+    const right = new Float32Array(1000);
+    right[999] = 0.2;
+    expect(hasSound([new Float32Array(1000), right])).toBe(true); // sound on one channel is enough
   });
 });
 

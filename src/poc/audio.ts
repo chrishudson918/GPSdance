@@ -102,7 +102,8 @@ export async function changeSpeed(buffer: AudioBuffer, rate: number): Promise<Au
   stretch.connect(offline.destination);
   const channels = Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c));
   await stretch.addBuffers(channels);
-  stretch.start(0, 0, undefined, rate);
+  // Wait until the stretcher has the start: rendering before it arrives could make a silent copy.
+  await stretch.start(0, 0, undefined, rate);
   return offline.startRendering();
 }
 

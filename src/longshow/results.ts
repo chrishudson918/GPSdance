@@ -18,6 +18,8 @@ export type ShowEvent =
   | { kind: 'swap'; song: number; spareSeconds: number }
   /** A new speed: seconds from the click until it played again (or was ready, if paused). */
   | { kind: 'speed'; song: number; rate: number; seconds: number; whilePlaying: boolean }
+  /** A slowed copy of a song was made; `silent` = it came out with no sound though the song has some. */
+  | { kind: 'slowCopy'; song: number; rate: number; silent: boolean }
   | { kind: 'end' }
   | { kind: 'error'; text: string };
 
@@ -89,6 +91,8 @@ export function eventText(e: ShowEvent, names: string[]): string {
         : `Quick start, song ${e.song + 1}: first part RAN OUT ${s1(-e.spareSeconds)} s before the whole song was ready`;
     case 'speed':
       return `Speed ${pct(e.rate)} on song ${e.song + 1}: ${e.whilePlaying ? 'playing again' : 'ready'} in ${s1(e.seconds)} s`;
+    case 'slowCopy':
+      return `Slowed copy of song ${song(e.song)} at ${pct(e.rate)}: ${e.silent ? 'SILENT (no sound)' : 'has sound'}`;
     case 'end':
       return 'The show reached its end';
     case 'error':
@@ -150,6 +154,15 @@ export function formatShowResults(r: ShowResults, build: { version: string; comm
   const speeds = r.events.filter((e) => e.kind === 'speed');
   if (speeds.length === 0) lines.push('  None');
   for (const e of speeds) lines.push(`  ${eventText(e, names)}${passMark(e.seconds < LIMITS.slowSeconds)}`);
+
+  const copies = r.events.filter((e) => e.kind === 'slowCopy');
+  if (copies.length > 0) {
+    const silent = copies.filter((e) => e.silent);
+    lines.push('');
+    lines.push('Slowed copies (each must have sound)');
+    lines.push(`  ${copies.length} made, ${silent.length} silent${passMark(silent.length === 0)}`);
+    for (const e of silent) lines.push(`  ${eventText(e, names)}`);
+  }
 
   const errors = r.events.filter((e) => e.kind === 'error');
   if (errors.length > 0) {

@@ -304,7 +304,7 @@ export default function LongShowApp() {
   );
 }
 
-/** Log lines worth a second look: late songs, a quick start that ran out, slow jumps or speeds, errors. */
+/** Log lines worth a second look: late songs, a quick start that ran out, slow jumps or speeds, silent copies, errors. */
 function isProblem(e: ShowEvent): boolean {
   switch (e.kind) {
     case 'change':
@@ -315,6 +315,8 @@ function isProblem(e: ShowEvent): boolean {
       return e.seconds >= jumpLimit(e.rate);
     case 'speed':
       return e.seconds >= LIMITS.slowSeconds;
+    case 'slowCopy':
+      return e.silent;
     case 'error':
       return true;
     default:

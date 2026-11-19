@@ -17,6 +17,7 @@ import {
   copyOffset,
   endClock,
   fadeLength,
+  hasSound,
   mayLoadNext,
   NEXT_LOAD_DELAY_SECONDS,
   songTimeAt,
@@ -59,6 +60,10 @@ export interface ShowSnapshot {
   peakAudioMb: number;
   playedSeconds: number;
   events: ShowEvent[];
+}
+
+function channelsOf(buffer: AudioBuffer): Float32Array[] {
+  return Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c));
 }
 
 /** Lead time when starting something "now", so the audio clock can schedule it cleanly. */
@@ -230,7 +235,11 @@ export class ShowPlayer {
     const start = Math.min(Math.max(0, from), decoded.duration);
     // Only the part from the playhead on: faster to make and smaller to hold (tech-stack.md, "Long mixes").
     const part = start > 0 ? slicePart(decoded, start, decoded.duration - start) : decoded;
-    return { buffer: await changeSpeed(part, rate), from: start, rate };
+    const copy = await changeSpeed(part, rate);
+    // A copy is "silent" only if the music it was made from had sound.
+    const silent = !hasSound(channelsOf(copy)) && hasSound(channelsOf(part));
+    this.log({ kind: 'slowCopy', song: index, rate, silent });
+    return { buffer: copy, from: start, rate };
   }
 
   /** Plays a song from a point, loading it first if it isn't held. `started` gets the clock time it sounds. */
