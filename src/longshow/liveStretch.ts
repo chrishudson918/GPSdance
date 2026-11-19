@@ -22,6 +22,8 @@ export const KEEP_BEHIND_SECONDS = 5;
  * (its own delay is about a tenth of a second); this leaves room on a slow Chromebook.
  */
 export const LIVE_START_DELAY = 0.3;
+/** How long the warm-up runs the speed tool on silence, seconds. */
+export const WARM_UP_SECONDS = 2;
 
 /**
  * The next piece to hand over, in song seconds, or null if the speed tool has enough for now
@@ -91,6 +93,23 @@ export class LiveFeed {
       if (data[0] === 'load') meter.add(data[1] as number, data[2] as number);
     });
     return new LiveFeed(node, origin);
+  }
+
+  /**
+   * Runs a speed tool on silence for a moment, so its first-time setup on the audio thread is done before
+   * the show starts. Added 2026-11-19: on the Dell 3120 the only dropouts in a 14-minute run came in the
+   * first seconds of the first song. Resolves with how long it took, in seconds.
+   */
+  static async warmUp(ctx: AudioContext): Promise<number> {
+    const began = performance.now();
+    await ctx.resume();
+    const feed = await LiveFeed.create(ctx, 2, 0, new LoadMeter()); // its own meter: not part of the show
+    feed.connect(ctx.destination); // silence in, silence out
+    const silence = new AudioBuffer({ length: ctx.sampleRate * WARM_UP_SECONDS, numberOfChannels: 2, sampleRate: ctx.sampleRate });
+    await feed.start(silence, ctx.currentTime + LIVE_START_DELAY, 0.75);
+    await new Promise((resolve) => setTimeout(resolve, (LIVE_START_DELAY + WARM_UP_SECONDS) * 1000));
+    feed.stop();
+    return (performance.now() - began) / 1000;
   }
 
   connect(destination: AudioNode): void {

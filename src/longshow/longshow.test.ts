@@ -178,6 +178,14 @@ describe('formatShowResults', () => {
     );
     expect(text).toContain('quick start (PASS) · dropouts so far: 1');
     expect(text).toContain('25.0 s to spare (PASS)\n');
+    expect(text).toContain('Warm-up: not done');
+
+    const warmed = formatShowResults(
+      { ...base, events: [{ kind: 'warmUp', seconds: 2.4, dropoutsSoFar: 1 }] },
+      build,
+      new Date(2026, 10, 19),
+    );
+    expect(warmed).toContain('Warm-up: Speed tool warmed up when the songs were picked (2.4 s) · dropouts so far: 1');
   });
 
   it('says when dropouts or the speed tool were not measured', () => {

@@ -104,6 +104,10 @@ export class ShowPlayer {
   private paused: { index: number; songSeconds: number } | null = null;
   private state: ShowState = 'idle';
   private events: ShowEvent[] = [];
+  /** The speed tool's first-time setup is done once per page (see LiveFeed.warmUp). */
+  private warmedUp = false;
+  /** Kept so picking songs again still shows it in the results. */
+  private warmUpEvent: ShowEvent | null = null;
   private peakAudioMb = 0;
   private meter = new LoadMeter();
   private playedSeconds = 0;
@@ -128,12 +132,25 @@ export class ShowPlayer {
     this.readyAt.clear();
     this.files = files;
     this.durations = [];
-    this.events = [];
+    this.events = this.warmUpEvent ? [this.warmUpEvent] : [];
     this.peakAudioMb = 0;
     this.meter.reset();
     this.playedSeconds = 0;
     this.state = 'idle';
     this.emit();
+    void this.warmUp();
+  }
+
+  /** Runs the speed tool on silence once, so its first-time setup isn't done while song 1 plays. */
+  private async warmUp(): Promise<void> {
+    if (this.warmedUp) return;
+    this.warmedUp = true;
+    try {
+      this.log({ kind: 'warmUp', seconds: await LiveFeed.warmUp(audioContext()) });
+      this.warmUpEvent = this.events.at(-1) ?? null;
+    } catch (err) {
+      this.log({ kind: 'error', text: `Warm-up: ${err instanceof Error ? err.message : String(err)}` });
+    }
   }
 
   /** Starts the clicked song from its beginning (also how the show starts: song 1). */

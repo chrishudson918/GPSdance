@@ -18,6 +18,8 @@ export type ShowEvent = (
   | { kind: 'swap'; song: number; spareSeconds: number }
   /** A new speed: seconds from the click until it played again (or was ready, if paused). */
   | { kind: 'speed'; song: number; rate: number; seconds: number; whilePlaying: boolean }
+  /** The speed tool ran on silence for a moment when the songs were picked (first-time setup done early). */
+  | { kind: 'warmUp'; seconds: number }
   | { kind: 'end' }
   | { kind: 'error'; text: string }
 ) & {
@@ -111,6 +113,8 @@ export function eventText(e: ShowEvent, names: string[]): string {
         : `Quick start, song ${e.song + 1}: first part RAN OUT ${s1(-e.spareSeconds)} s before the whole song was ready`;
     case 'speed':
       return `Speed ${pct(e.rate)} on song ${e.song + 1}: ${e.whilePlaying ? 'playing again' : 'ready'} in ${s1(e.seconds)} s`;
+    case 'warmUp':
+      return `Speed tool warmed up when the songs were picked (${s1(e.seconds)} s)`;
     case 'end':
       return 'The show reached its end';
     case 'error':
@@ -165,6 +169,8 @@ export function formatShowResults(r: ShowResults, build: { version: string; comm
         : 'not used (no practice speed played)'
     }`,
   );
+  const warmUp = r.events.find((e) => e.kind === 'warmUp');
+  lines.push(`Warm-up: ${warmUp ? `${eventText(warmUp, names)}${dropoutsText(warmUp)}` : 'not done'}`);
   lines.push(`Gaps or stutter heard: ${r.gaps ?? 'not answered'}${passMark(r.gaps ? r.gaps === 'none' : undefined)}`);
   lines.push('');
 
