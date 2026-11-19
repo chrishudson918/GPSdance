@@ -4,20 +4,21 @@
 //
 // How it works:
 // - Songs stay as the picked files (compressed, a few MB each). Only two are ever decoded.
-// - While a song plays, the next one is decoded (and slowed, at a practice speed) in the background,
-//   then scheduled on the audio clock to start one crossfade before the current one ends.
+// - While a song plays, the next one is decoded in the background, then scheduled on the audio clock
+//   to start one crossfade before the current one ends.
 // - When a song has finished, it's let go, and loading the one after it starts.
 // - A jump drops everything and starts the clicked song: whole (decode it all, then play) or
 //   quick start (decode only the first seconds, play, then swap to the whole song in the background).
+// - At 100% songs play straight from the decoded audio. At a practice speed they're slowed live by the
+//   speed tool, fed a piece at a time (liveStretch.ts); no slowed copies are made or kept.
 
-import { audioContext, bufferMb, changeSpeed, decodeFile, slicePart } from '../poc/audio';
+import { audioContext, bufferMb, decodeFile } from '../poc/audio';
 import { readQuickChunk } from './chunks';
+import { LIVE_START_DELAY, LiveFeed, LoadMeter } from './liveStretch';
 import type { JumpMode, LoadMode, ShowEvent } from './results';
 import {
-  copyOffset,
   endClock,
   fadeLength,
-  hasSound,
   mayLoadNext,
   NEXT_LOAD_DELAY_SECONDS,
   songTimeAt,
@@ -25,18 +26,16 @@ import {
   type Anchor,
 } from './showPlan';
 
-/** A decoded copy of a song, possibly slowed, possibly starting partway in (`from`, original seconds). */
-interface Held {
-  buffer: AudioBuffer;
-  from: number;
-  rate: number;
-}
-
 /** A song that is playing or scheduled to play. */
 interface Voice extends Anchor {
   index: number;
   gain: GainNode;
+  /** At 100%: the decoded audio playing (a quick-start part, then the whole song). */
   sources: AudioBufferSourceNode[];
+  /** At a practice speed: the speed tool slowing it live. */
+  live: LiveFeed | null;
+  /** What it plays from: a quick-start part until the whole song is decoded. */
+  audio: AudioBuffer;
   /** Clock time it starts sounding. */
   startClock: number;
   /** Clock time it ends; Infinity while only a quick-start part is known (its length isn't yet). */
@@ -58,16 +57,20 @@ export interface ShowSnapshot {
   held: number[];
   audioMb: number;
   peakAudioMb: number;
+  /** The speed tool's busiest second so far, as a share of it (undefined until a practice speed has played). */
+  peakLoad: number | undefined;
   playedSeconds: number;
   events: ShowEvent[];
 }
 
-function channelsOf(buffer: AudioBuffer): Float32Array[] {
-  return Array.from({ length: buffer.numberOfChannels }, (_, c) => buffer.getChannelData(c));
-}
-
-/** Lead time when starting something "now", so the audio clock can schedule it cleanly. */
+/** Lead time when starting something "now" at 100%, so the audio clock can schedule it cleanly. */
 const START_DELAY = 0.05;
+
+/**
+ * At a practice speed, start the next song's speed tool only this close to its crossfade:
+ * a speed tool works even while waiting, so making it early would double the processor load for minutes.
+ */
+const LIVE_SCHEDULE_AHEAD_SECONDS = 5;
 
 export class ShowPlayer {
   loadMode: LoadMode = 'whole';
@@ -79,9 +82,13 @@ export class ShowPlayer {
   /** Bumped by every jump, pause and speed change, so loads started before it are ignored. */
   private generation = 0;
   private voices: Voice[] = [];
-  private held = new Map<number, Held>();
+  /** Whole decoded songs (original speed). */
+  private held = new Map<number, AudioBuffer>();
   private quickPart: AudioBuffer | null = null;
+  /** Songs being decoded or scheduled in the background. */
   private loading = new Set<number>();
+  /** Clock time each next song finished decoding (for "next song ready … s early"). */
+  private readyAt = new Map<number, number>();
   /** Clock time before which the next song isn't loaded (set after a jump, speed change or resume). */
   private holdNextUntil = 0;
   /** A song change that is scheduled but hasn't sounded yet; logged once it does (a pause or jump cancels it). */
@@ -90,6 +97,7 @@ export class ShowPlayer {
   private state: ShowState = 'idle';
   private events: ShowEvent[] = [];
   private peakAudioMb = 0;
+  private meter = new LoadMeter();
   private playedSeconds = 0;
   private lastTick = 0;
   private timer: ReturnType<typeof setInterval> | undefined;
@@ -109,10 +117,12 @@ export class ShowPlayer {
   setSongs(files: File[]): void {
     this.stopEverything();
     this.held.clear();
+    this.readyAt.clear();
     this.files = files;
     this.durations = [];
     this.events = [];
     this.peakAudioMb = 0;
+    this.meter.reset();
     this.playedSeconds = 0;
     this.state = 'idle';
     this.emit();
@@ -125,36 +135,38 @@ export class ShowPlayer {
     void ctx.resume(); // starting audio needs a click; this is one
     this.stopEverything();
     this.held.clear();
+    this.readyAt.clear();
     const generation = this.generation;
     const rate = this.rate;
     this.state = 'loading';
     this.emit();
 
     try {
-      const quick = this.loadMode === 'quick' && rate === 1 ? await readQuickChunk(this.files[index]) : null;
+      const quick = this.loadMode === 'quick' ? await readQuickChunk(this.files[index]) : null;
       if (quick) {
         const part = await ctx.decodeAudioData(quick);
         if (generation !== this.generation) return;
         this.quickPart = part;
-        const at = ctx.currentTime + START_DELAY;
-        const voice = this.startVoice(index, part, 0, 0, at, 0);
-        this.holdNextUntil = at + NEXT_LOAD_DELAY_SECONDS;
-        this.logJump(index, clicked, at, rate, 'quick');
+        const voice = await this.startVoice(index, part, 0, null, 0, generation);
+        if (!voice) return;
+        this.holdNextUntil = voice.startClock + NEXT_LOAD_DELAY_SECONDS;
+        this.logJump(index, clicked, voice.startClock, rate, 'quick');
         this.beginPlaying();
 
-        const whole = await this.loadSong(index, 1, 0);
+        const whole = await this.loadSong(index);
         if (generation !== this.generation) return;
         this.held.set(index, whole);
         this.swapInWhole(voice, whole, part);
       } else {
-        const whole = await this.loadSong(index, rate, 0);
+        const whole = await this.loadSong(index);
         if (generation !== this.generation) return;
         this.held.set(index, whole);
-        const at = ctx.currentTime + START_DELAY;
-        this.setEnd(this.startVoice(index, whole.buffer, whole.from, 0, at, 0));
-        this.holdNextUntil = at + NEXT_LOAD_DELAY_SECONDS;
-        const mode: JumpMode = this.loadMode === 'quick' && rate === 1 ? 'wholeFallback' : 'whole';
-        this.logJump(index, clicked, at, rate, mode);
+        const voice = await this.startVoice(index, whole, 0, null, 0, generation);
+        if (!voice) return;
+        this.setEnd(voice);
+        this.holdNextUntil = voice.startClock + NEXT_LOAD_DELAY_SECONDS;
+        const mode: JumpMode = this.loadMode === 'quick' ? 'wholeFallback' : 'whole';
+        this.logJump(index, clicked, voice.startClock, rate, mode);
         this.beginPlaying();
       }
     } catch (err) {
@@ -185,8 +197,8 @@ export class ShowPlayer {
   }
 
   /**
-   * Changes the practice speed. If music is playing it pauses, the current song is slowed from where it
-   * was ("Getting it ready…"), and it carries on. The next song is then made at the new speed in the background.
+   * Changes the practice speed. If music is playing, it carries on from the same spot at the new speed
+   * (the decoded song is kept, so there's nothing to prepare unless it's still decoding).
    */
   async setSpeed(rate: number): Promise<void> {
     if (rate === this.rate || this.state === 'loading' || this.state === 'preparing') return;
@@ -196,103 +208,117 @@ export class ShowPlayer {
     const where = this.position();
     const wasPlaying = this.state === 'playing';
     this.stopEverything();
-    this.held.clear(); // copies at the old speed are no use now
     this.rate = rate;
     if (!where) {
       this.emit();
       return;
     }
 
-    const generation = this.generation;
-    this.state = 'preparing';
-    this.emit();
     if (wasPlaying) {
-      await this.playFrom(where.index, where.songSeconds, generation, (at) => {
+      await this.playFrom(where.index, where.songSeconds, this.generation, (at) => {
         const seconds = (performance.now() + (at - ctx.currentTime) * 1000 - clicked) / 1000;
         this.log({ kind: 'speed', song: where.index, rate, seconds, whilePlaying: true });
       });
     } else {
-      try {
-        const copy = await this.loadSong(where.index, rate, where.songSeconds);
-        if (generation !== this.generation) return;
-        this.held.set(where.index, copy);
-        this.paused = where;
-        this.state = 'paused';
-        this.log({ kind: 'speed', song: where.index, rate, seconds: (performance.now() - clicked) / 1000, whilePlaying: false });
-      } catch (err) {
-        this.fail(generation, err);
-      }
+      this.paused = where;
+      this.state = 'paused';
+      this.log({ kind: 'speed', song: where.index, rate, seconds: (performance.now() - clicked) / 1000, whilePlaying: false });
     }
   }
 
   // ---- inside ----
 
-  /** Decodes a song and, at a practice speed, makes its slowed copy (from `from` seconds on). */
-  private async loadSong(index: number, rate: number, from: number): Promise<Held> {
+  /** Decodes a whole song. */
+  private async loadSong(index: number): Promise<AudioBuffer> {
     const decoded = await decodeFile(this.files[index]);
     this.durations[index] = decoded.duration;
-    if (rate === 1) return { buffer: decoded, from: 0, rate };
-    const start = Math.min(Math.max(0, from), decoded.duration);
-    // Only the part from the playhead on: faster to make and smaller to hold (tech-stack.md, "Long mixes").
-    const part = start > 0 ? slicePart(decoded, start, decoded.duration - start) : decoded;
-    const copy = await changeSpeed(part, rate);
-    // A copy is "silent" only if the music it was made from had sound.
-    const silent = !hasSound(channelsOf(copy)) && hasSound(channelsOf(part));
-    this.log({ kind: 'slowCopy', song: index, rate, silent });
-    return { buffer: copy, from: start, rate };
+    return decoded;
   }
 
-  /** Plays a song from a point, loading it first if it isn't held. `started` gets the clock time it sounds. */
+  /** Plays a song from a point, decoding it first if it isn't held. `started` gets the clock time it sounds. */
   private async playFrom(index: number, songSeconds: number, generation: number, started: (at: number) => void) {
-    const ctx = audioContext();
     try {
-      let copy = this.held.get(index);
-      if (!copy || copy.rate !== this.rate || songSeconds < copy.from) {
+      let whole = this.held.get(index);
+      if (!whole) {
         this.state = 'preparing';
         this.emit();
-        copy = await this.loadSong(index, this.rate, songSeconds);
+        whole = await this.loadSong(index);
         if (generation !== this.generation) return;
-        this.held.set(index, copy);
+        this.held.set(index, whole);
       }
-      const at = ctx.currentTime + START_DELAY;
-      this.setEnd(this.startVoice(index, copy.buffer, copy.from, songSeconds, at, 0));
-      this.holdNextUntil = at + NEXT_LOAD_DELAY_SECONDS;
-      started(at);
+      const voice = await this.startVoice(index, whole, songSeconds, null, 0, generation);
+      if (!voice) return;
+      this.setEnd(voice);
+      this.holdNextUntil = voice.startClock + NEXT_LOAD_DELAY_SECONDS;
+      started(voice.startClock);
       this.beginPlaying();
     } catch (err) {
       this.fail(generation, err);
     }
   }
 
-  private startVoice(index: number, buffer: AudioBuffer, copyFrom: number, songSeconds: number, at: number, fadeIn: number): Voice {
+  /**
+   * Starts a song sounding at clock time `at` (null = as soon as it can), from `songSeconds` into it,
+   * at the current speed. Returns null if a jump, pause or speed change came first.
+   */
+  private async startVoice(
+    index: number,
+    audio: AudioBuffer,
+    songSeconds: number,
+    at: number | null,
+    fadeIn: number,
+    generation: number,
+  ): Promise<Voice | null> {
     const ctx = audioContext();
+    const rate = this.rate;
+    let live: LiveFeed | null = null;
+    if (rate !== 1) {
+      live = await LiveFeed.create(ctx, audio.numberOfChannels, songSeconds, this.meter);
+      if (generation !== this.generation) {
+        live.stop();
+        return null;
+      }
+    }
+    const lead = live ? LIVE_START_DELAY : START_DELAY;
+    const onTime = at !== null && at >= ctx.currentTime + lead;
+    const startAt = onTime ? at : ctx.currentTime + lead;
+
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
-    if (fadeIn > 0) {
-      gain.gain.setValueAtTime(0, at);
-      gain.gain.linearRampToValueAtTime(1, at + fadeIn);
+    // A song that couldn't start on time comes straight in: the one before it has already faded.
+    if (fadeIn > 0 && (onTime || at === null)) {
+      gain.gain.setValueAtTime(0, startAt);
+      gain.gain.linearRampToValueAtTime(1, startAt + fadeIn);
     }
     const voice: Voice = {
       index,
       gain,
       sources: [],
-      anchorClock: at,
+      live,
+      audio,
+      anchorClock: startAt,
       anchorSong: songSeconds,
-      rate: this.rate,
-      startClock: at,
+      rate,
+      startClock: startAt,
       endClock: Infinity,
       fadeOut: 0,
     };
-    this.addSource(voice, buffer, copyFrom, at);
     this.voices.push(voice);
+    if (live) {
+      live.connect(gain);
+      await live.start(audio, startAt, rate);
+    } else {
+      this.addSource(voice, audio, startAt);
+    }
     return voice;
   }
 
-  private addSource(voice: Voice, buffer: AudioBuffer, copyFrom: number, at: number): AudioBufferSourceNode {
+  /** At 100%: plays `buffer` (which starts at the song's beginning) from where the song is at `at`. */
+  private addSource(voice: Voice, buffer: AudioBuffer, at: number): AudioBufferSourceNode {
     const source = audioContext().createBufferSource();
     source.buffer = buffer;
     source.connect(voice.gain);
-    source.start(at, copyOffset(songTimeAt(voice, at), copyFrom, voice.rate));
+    source.start(at, Math.max(0, songTimeAt(voice, at)));
     voice.sources.push(source);
     return source;
   }
@@ -308,18 +334,22 @@ export class ShowPlayer {
   }
 
   /** Quick start: the whole song takes over from the first part, at the same spot in the music. */
-  private swapInWhole(voice: Voice, whole: Held, part: AudioBuffer): void {
+  private swapInWhole(voice: Voice, whole: AudioBuffer, part: AudioBuffer): void {
     const at = audioContext().currentTime + 0.1;
-    const spareSeconds = voice.startClock + part.duration - at;
-    const first = voice.sources[0];
-    this.addSource(voice, whole.buffer, whole.from, at);
-    first.stop(at);
+    // Real seconds of the first part left to play when the whole song takes over.
+    const spareSeconds = endClock(voice, part.duration) - at;
+    voice.audio = whole; // a live voice is fed from here on
+    if (!voice.live) {
+      const first = voice.sources[0];
+      this.addSource(voice, whole, at);
+      first.stop(at);
+    }
     this.quickPart = null;
     this.setEnd(voice);
     this.log({ kind: 'swap', song: voice.index, spareSeconds });
   }
 
-  /** Runs 4 times a second while playing: lets finished songs go, loads and schedules the next one. */
+  /** Runs 4 times a second while playing: feeds live songs, lets finished ones go, loads and schedules the next. */
   private tick = () => {
     const now = audioContext().currentTime;
     const wall = performance.now();
@@ -330,6 +360,8 @@ export class ShowPlayer {
       if (now > voice.endClock + 0.25) {
         this.dropVoice(voice);
         this.held.delete(voice.index);
+      } else if (voice.live) {
+        void voice.live.feed(voice.audio, songTimeAt(voice, now)).catch((err) => this.fail(this.generation, err));
       }
     }
     if (this.pendingChange && now >= this.pendingChange.at) {
@@ -341,6 +373,7 @@ export class ShowPlayer {
       this.log({ kind: 'end' });
       this.stopEverything();
       this.held.clear();
+    this.readyAt.clear();
       this.state = 'idle';
       this.emit();
       return;
@@ -349,10 +382,12 @@ export class ShowPlayer {
     const next = Number.isFinite(current.endClock)
       ? songToLoad(current.index, this.voices.length, this.files.length)
       : null;
-    if (next !== null) {
+    if (next !== null && !this.loading.has(next)) {
       const ready = this.held.get(next);
-      if (ready) this.scheduleNext(current, next, ready, now);
-      else if (!this.loading.has(next) && mayLoadNext(now, this.holdNextUntil, current.endClock)) {
+      if (ready) {
+        const startsIn = current.endClock - current.fadeOut - now;
+        if (this.rate === 1 || startsIn <= LIVE_SCHEDULE_AHEAD_SECONDS) void this.scheduleNext(current, next, ready);
+      } else if (mayLoadNext(now, this.holdNextUntil, current.endClock)) {
         void this.loadNext(next);
       }
     }
@@ -363,24 +398,39 @@ export class ShowPlayer {
     const generation = this.generation;
     this.loading.add(index);
     try {
-      const copy = await this.loadSong(index, this.rate, 0);
+      const whole = await this.loadSong(index);
       if (generation !== this.generation) return;
       this.loading.delete(index);
-      this.held.set(index, copy);
-      this.tick(); // schedule it right away
+      this.held.set(index, whole);
+      this.readyAt.set(index, audioContext().currentTime);
+      this.tick(); // schedule it if it's time
     } catch (err) {
       this.fail(generation, err);
     }
   }
 
   /** Starts the next song one crossfade before the current one ends (or now, if it's already late). */
-  private scheduleNext(current: Voice, next: number, ready: Held, now: number): void {
-    const planned = current.endClock - current.fadeOut;
-    const leadSeconds = planned - now;
-    const late = leadSeconds < START_DELAY;
-    const at = late ? now + START_DELAY : planned;
-    this.setEnd(this.startVoice(next, ready.buffer, ready.from, 0, at, late ? 0 : current.fadeOut));
-    this.pendingChange = { event: { kind: 'change', from: current.index, to: next, leadSeconds, rate: this.rate }, at };
+  private async scheduleNext(current: Voice, next: number, ready: AudioBuffer): Promise<void> {
+    const generation = this.generation;
+    this.loading.add(next); // so the next tick doesn't schedule it twice
+    try {
+      const planned = current.endClock - current.fadeOut;
+      const voice = await this.startVoice(next, ready, 0, planned, current.fadeOut, generation);
+      if (!voice) return;
+      this.loading.delete(next);
+      this.setEnd(voice);
+      // How early it was ready: from when it finished decoding to when it was planned to sound
+      // (negative if it started late, a gap).
+      const late = voice.startClock > planned + 0.01;
+      const leadSeconds = late ? planned - voice.startClock : planned - (this.readyAt.get(next) ?? planned);
+      this.readyAt.delete(next);
+      this.pendingChange = {
+        event: { kind: 'change', from: current.index, to: next, leadSeconds, rate: this.rate },
+        at: voice.startClock,
+      };
+    } catch (err) {
+      this.fail(generation, err);
+    }
   }
 
   /** The song most recently started (the newer one during a crossfade). */
@@ -418,11 +468,12 @@ export class ShowPlayer {
       }
       source.disconnect();
     }
+    voice.live?.stop();
     voice.gain.disconnect();
     this.voices = this.voices.filter((v) => v !== voice);
   }
 
-  /** Silences everything and forgets work in progress (held copies are kept unless the caller clears them). */
+  /** Silences everything and forgets work in progress (held songs are kept unless the caller clears them). */
   private stopEverything(): void {
     this.generation++;
     for (const voice of [...this.voices]) this.dropVoice(voice);
@@ -448,7 +499,8 @@ export class ShowPlayer {
 
   private audioMb(): number {
     let mb = this.quickPart ? bufferMb(this.quickPart) : 0;
-    for (const copy of this.held.values()) mb += bufferMb(copy.buffer);
+    for (const song of this.held.values()) mb += bufferMb(song);
+    for (const voice of this.voices) mb += voice.live?.heldMb(voice.audio.numberOfChannels, voice.audio.sampleRate) ?? 0;
     return mb;
   }
 
@@ -464,6 +516,7 @@ export class ShowPlayer {
       held: [...this.held.keys()].sort((a, b) => a - b),
       audioMb,
       peakAudioMb: this.peakAudioMb,
+      peakLoad: this.meter.peak,
       playedSeconds: this.playedSeconds,
       events: this.events,
     };

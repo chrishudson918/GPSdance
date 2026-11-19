@@ -18,8 +18,6 @@ export type ShowEvent =
   | { kind: 'swap'; song: number; spareSeconds: number }
   /** A new speed: seconds from the click until it played again (or was ready, if paused). */
   | { kind: 'speed'; song: number; rate: number; seconds: number; whilePlaying: boolean }
-  /** A slowed copy of a song was made; `silent` = it came out with no sound though the song has some. */
-  | { kind: 'slowCopy'; song: number; rate: number; silent: boolean }
   | { kind: 'end' }
   | { kind: 'error'; text: string };
 
@@ -30,7 +28,18 @@ export const LIMITS = {
   jumpSeconds: 1,
   /** Jump at a practice speed, and a speed change: "Getting it ready…" up to this. */
   slowSeconds: 10,
+  /**
+   * The speed tool's busiest second, as a share of it (live slowing, 2026-11-19). Leaves room for the
+   * real Player's screen on the same processor.
+   */
+  speedToolLoad: 0.7,
 };
+
+/** Chrome's own count of moments the sound broke up (AudioContext.playbackStats), if the browser has it. */
+export interface Dropouts {
+  events: number;
+  seconds: number;
+}
 
 export interface ShowSong {
   name: string;
@@ -49,6 +58,10 @@ export interface ShowResults {
   peakAudioMb: number;
   /** Real time spent playing, seconds. */
   playedSeconds: number;
+  /** The speed tool's busiest second, as a share of it; undefined if no practice speed played. */
+  peakLoad?: number;
+  /** Dropouts so far; null if this browser can't count them. */
+  dropouts: Dropouts | null;
   /** Peak tab memory from Chrome's Task Manager, typed in by the tester. */
   taskManagerMb?: number;
   /** What the listener heard. */
@@ -91,8 +104,6 @@ export function eventText(e: ShowEvent, names: string[]): string {
         : `Quick start, song ${e.song + 1}: first part RAN OUT ${s1(-e.spareSeconds)} s before the whole song was ready`;
     case 'speed':
       return `Speed ${pct(e.rate)} on song ${e.song + 1}: ${e.whilePlaying ? 'playing again' : 'ready'} in ${s1(e.seconds)} s`;
-    case 'slowCopy':
-      return `Slowed copy of song ${song(e.song)} at ${pct(e.rate)}: ${e.silent ? 'SILENT (no sound)' : 'has sound'}`;
     case 'end':
       return 'The show reached its end';
     case 'error':
@@ -128,6 +139,20 @@ export function formatShowResults(r: ShowResults, build: { version: string; comm
       r.taskManagerMb !== undefined ? `${r.taskManagerMb} MB${passMark(r.taskManagerMb < LIMITS.memoryMb)}` : 'not entered'
     }`,
   );
+  lines.push(
+    `Dropouts (Chrome's count of moments the sound broke up): ${
+      r.dropouts
+        ? `${r.dropouts.events}${r.dropouts.events > 0 ? ` (${s1(r.dropouts.seconds)} s in all)` : ''}${passMark(r.dropouts.events === 0)}`
+        : 'not available in this browser'
+    }`,
+  );
+  lines.push(
+    `Speed tool, busiest second: ${
+      r.peakLoad !== undefined
+        ? `${Math.round(r.peakLoad * 100)}% of the time allowed (limit ${Math.round(LIMITS.speedToolLoad * 100)}%)${passMark(r.peakLoad < LIMITS.speedToolLoad)}`
+        : 'not used (no practice speed played)'
+    }`,
+  );
   lines.push(`Gaps or stutter heard: ${r.gaps ?? 'not answered'}${passMark(r.gaps ? r.gaps === 'none' : undefined)}`);
   lines.push('');
 
@@ -154,15 +179,6 @@ export function formatShowResults(r: ShowResults, build: { version: string; comm
   const speeds = r.events.filter((e) => e.kind === 'speed');
   if (speeds.length === 0) lines.push('  None');
   for (const e of speeds) lines.push(`  ${eventText(e, names)}${passMark(e.seconds < LIMITS.slowSeconds)}`);
-
-  const copies = r.events.filter((e) => e.kind === 'slowCopy');
-  if (copies.length > 0) {
-    const silent = copies.filter((e) => e.silent);
-    lines.push('');
-    lines.push('Slowed copies (each must have sound)');
-    lines.push(`  ${copies.length} made, ${silent.length} silent${passMark(silent.length === 0)}`);
-    for (const e of silent) lines.push(`  ${eventText(e, names)}`);
-  }
 
   const errors = r.events.filter((e) => e.kind === 'error');
   if (errors.length > 0) {

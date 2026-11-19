@@ -7,13 +7,12 @@ import {
   readWavLayout,
   wavChunkDataBytes,
 } from './chunks';
+import { LoadMeter, nextPiece } from './liveStretch';
 import { formatShowResults, type ShowResults } from './results';
 import {
-  copyOffset,
   CROSSFADE_SECONDS,
   endClock,
   fadeLength,
-  hasSound,
   mayLoadNext,
   songTimeAt,
   songToLoad,
@@ -25,12 +24,6 @@ describe('showPlan', () => {
     expect(songTimeAt(a, 10)).toBe(30);
     expect(songTimeAt(a, 14)).toBe(32); // 4 real seconds at 50% = 2 song seconds
     expect(endClock(a, 60)).toBe(70); // 30 song seconds left take 60 real seconds
-  });
-
-  it('reads a slowed copy made from the playhead at the right spot', () => {
-    expect(copyOffset(30, 30, 0.5)).toBe(0);
-    expect(copyOffset(40, 30, 0.5)).toBe(20);
-    expect(copyOffset(12, 0, 1)).toBe(12);
   });
 
   it('keeps crossfades to 3 s, or half a very short song', () => {
@@ -97,6 +90,7 @@ describe('formatShowResults', () => {
     events: [],
     peakAudioMb: 150,
     playedSeconds: 540,
+    dropouts: null,
     notes: '',
   };
   const build = { version: '0.0.1', commit: 'abc1234' };
@@ -152,42 +146,61 @@ describe('formatShowResults', () => {
     expect(text).toContain('Late: 1 (FAIL)');
   });
 
-  it('lists slowed copies that came out silent', () => {
-    const clean = formatShowResults(
-      { ...base, events: [{ kind: 'slowCopy', song: 0, rate: 0.75, silent: false }] },
-      build,
-      new Date(2026, 10, 19),
-    );
-    expect(clean).toContain('1 made, 0 silent (PASS)');
-
+  it('reports dropouts and the speed tool load', () => {
     const text = formatShowResults(
-      {
-        ...base,
-        events: [
-          { kind: 'slowCopy', song: 0, rate: 0.75, silent: false },
-          { kind: 'slowCopy', song: 1, rate: 0.75, silent: true },
-        ],
-      },
+      { ...base, peakLoad: 0.45, dropouts: { events: 0, seconds: 0 } },
       build,
       new Date(2026, 10, 19),
     );
-    expect(text).toContain('2 made, 1 silent (FAIL)');
-    expect(text).toContain('Slowed copy of song 2 "song2.mp3" at 75%: SILENT (no sound)');
-    expect(text).not.toContain('song 1 "song1.mp3" at 75%');
+    expect(text).toContain("Dropouts (Chrome's count of moments the sound broke up): 0 (PASS)");
+    expect(text).toContain('Speed tool, busiest second: 45% of the time allowed (limit 70%) (PASS)');
+
+    const bad = formatShowResults(
+      { ...base, peakLoad: 0.92, dropouts: { events: 3, seconds: 0.08 } },
+      build,
+      new Date(2026, 10, 19),
+    );
+    expect(bad).toContain('3 (0.1 s in all) (FAIL)');
+    expect(bad).toContain('92% of the time allowed (limit 70%) (FAIL)');
   });
 
-  it('leaves out the slowed-copies section when none were made', () => {
-    expect(formatShowResults(base, build, new Date(2026, 10, 19))).not.toContain('Slowed copies');
+  it('says when dropouts or the speed tool were not measured', () => {
+    const text = formatShowResults(base, build, new Date(2026, 10, 19));
+    expect(text).toContain('not available in this browser');
+    expect(text).toContain('not used (no practice speed played)');
   });
 });
 
-describe('hasSound', () => {
-  it('tells silence from music', () => {
-    expect(hasSound([new Float32Array(1000)])).toBe(false);
-    expect(hasSound([new Float32Array(1000).fill(0.0005)])).toBe(false); // below the silence level
-    const right = new Float32Array(1000);
-    right[999] = 0.2;
-    expect(hasSound([new Float32Array(1000), right])).toBe(true); // sound on one channel is enough
+describe('live slowing', () => {
+  it('feeds the speed tool a piece at a time, about 20 s ahead', () => {
+    expect(nextPiece(0, 0, 240)).toEqual({ from: 0, to: 10 });
+    expect(nextPiece(10, 0, 240)).toEqual({ from: 10, to: 20 });
+    expect(nextPiece(20, 0, 240)).toBeNull(); // 20 s ahead: enough for now
+    expect(nextPiece(20, 1, 240)).toEqual({ from: 20, to: 30 });
+    expect(nextPiece(30, 12, 240)).toEqual({ from: 30, to: 40 });
+  });
+
+  it('stops at what is decoded so far, and at the end of the song', () => {
+    expect(nextPiece(10, 2, 12.5)).toEqual({ from: 10, to: 12.5 }); // a quick-start part
+    expect(nextPiece(12.5, 5, 12.5)).toBeNull(); // waiting for the whole song
+    expect(nextPiece(235, 220, 240)).toEqual({ from: 235, to: 240 });
+    expect(nextPiece(240, 230, 240)).toBeNull();
+  });
+
+  it('starts feeding from where a resumed song plays', () => {
+    expect(nextPiece(95, 95, 240)).toEqual({ from: 95, to: 105 });
+  });
+
+  it('keeps the busiest second, adding up songs slowing at once', () => {
+    const meter = new LoadMeter();
+    expect(meter.peak).toBeUndefined();
+    meter.add(3, 300);
+    meter.add(4, 350);
+    meter.add(4, 250); // a second song during a crossfade
+    meter.add(5, 100);
+    expect(meter.peak).toBeCloseTo(0.6);
+    meter.reset();
+    expect(meter.peak).toBeUndefined();
   });
 });
 

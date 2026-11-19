@@ -7,7 +7,16 @@ import { readDeviceInfo, runChecks } from '../deviceCheck';
 import { formatTime } from '../poc/mixPlan';
 import { audioContext } from '../poc/audio';
 import { ShowPlayer } from './engine';
-import { eventText, formatShowResults, jumpLimit, LIMITS, type LoadMode, type ShowEvent, type ShowSong } from './results';
+import {
+  eventText,
+  formatShowResults,
+  jumpLimit,
+  LIMITS,
+  type Dropouts,
+  type LoadMode,
+  type ShowEvent,
+  type ShowSong,
+} from './results';
 import { QUICK_START_SECONDS } from './chunks';
 
 const build = __BUILD_INFO__;
@@ -20,6 +29,14 @@ function deviceText(): string {
 }
 
 /** A song's length from the file's own information, without decoding it (cheap; for the song list only). */
+/** Chrome's count of moments the sound broke up since the page's audio started, if this browser has it. */
+function readDropouts(): Dropouts | null {
+  const stats = (audioContext() as AudioContext & {
+    playbackStats?: { underrunEvents: number; underrunDuration: number };
+  }).playbackStats;
+  return stats ? { events: stats.underrunEvents, seconds: stats.underrunDuration } : null;
+}
+
 function readLength(file: File): Promise<number | undefined> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
@@ -101,6 +118,8 @@ export default function LongShowApp() {
         songs,
         events: snap.events,
         peakAudioMb: snap.peakAudioMb,
+        peakLoad: snap.peakLoad,
+        dropouts: readDropouts(),
         playedSeconds: snap.playedSeconds,
         taskManagerMb,
         gaps,
@@ -240,7 +259,8 @@ export default function LongShowApp() {
           onChange={setLoadMode}
         />
         <p className="muted small-text">
-          Quick start works for MP3 and WAV at 100% speed; other files and practice speeds load the whole song.
+          Quick start works for MP3 and WAV, at any speed; other files load the whole song. Practice speeds are
+          slowed live while the song plays.
           Limits: a jump sounds within {LIMITS.jumpSeconds} s at 100% ({jumpLimit(0.5)} s at a practice speed); a new
           speed within {LIMITS.slowSeconds} s.
         </p>
@@ -248,6 +268,7 @@ export default function LongShowApp() {
           Audio in memory: <strong>{Math.round(snap.audioMb)} MB</strong> (highest {Math.round(snap.peakAudioMb)} MB)
           {snap.held.length > 0 && ` · songs ${snap.held.map((i) => i + 1).join(' and ')}`} · played{' '}
           {formatTime(snap.playedSeconds)} · audio clock {audioContext().sampleRate} Hz
+          {snap.peakLoad !== undefined && ` · speed tool busiest second ${Math.round(snap.peakLoad * 100)}%`}
         </p>
       </section>
 
@@ -304,7 +325,7 @@ export default function LongShowApp() {
   );
 }
 
-/** Log lines worth a second look: late songs, a quick start that ran out, slow jumps or speeds, silent copies, errors. */
+/** Log lines worth a second look: late songs, a quick start that ran out, slow jumps or speeds, errors. */
 function isProblem(e: ShowEvent): boolean {
   switch (e.kind) {
     case 'change':
@@ -315,8 +336,6 @@ function isProblem(e: ShowEvent): boolean {
       return e.seconds >= jumpLimit(e.rate);
     case 'speed':
       return e.seconds >= LIMITS.slowSeconds;
-    case 'slowCopy':
-      return e.silent;
     case 'error':
       return true;
     default:
