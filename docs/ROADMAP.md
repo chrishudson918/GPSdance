@@ -10,7 +10,7 @@ Ideas go on here only with the user's yes, after a check against [VISION.md](VIS
 ## Now
 
 - Chromebook proof of concept (6 tests; [design/tech-stack.md](design/tech-stack.md)), the build-vs-buy decision point. All six have passed; left: test 5 on the Chromebook from the live address, test 6 with a student login, and fixing the Picker key's website restriction.
-- Long-show memory test on the Dell 3120 (page built 2026-11-18). First run: straight play passed; jumps peaked at about 686 MB (limit 500). Fixes are live; a short jumps-only re-run is next. See [design/player.md](design/player.md).
+- Long-show memory test on the Dell 3120 (page built 2026-11-18). Straight play, jumps and live slowing at 75% have passed in short runs (tab 250 MB at 75%, 2026-11-19); a full 40-minute run at a practice speed is next. See [design/player.md](design/player.md).
 
 ## Done
 
